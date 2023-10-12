@@ -20,7 +20,7 @@ namespace Backend_API.DTOs
 
         public List<CategoryDTO>? InverseParent { get; set; }
 
-        public virtual CategoryDTO? Parent { get; set; }
+        public string? ParentName { get; set; }
 
         public List<ProductDTO>? Products { get; set; }
     }

@@ -1,3 +1,5 @@
+using Backend_API;
+using Backend_API.Entities;
 using CloudinaryDotNet.Actions;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,9 +27,12 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add AutoMapper configuration
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 // Add connection to databbase.
 var connectionString = builder.Configuration.GetConnectionString("Bookstore");
-builder.Services.AddDbContext<Backend_API.Entities.BookstoreContext>(
+builder.Services.AddDbContext<BookstoreContext>(
     options => options.UseSqlServer(connectionString)
 );
 
