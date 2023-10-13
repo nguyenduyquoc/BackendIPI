@@ -22,7 +22,9 @@ namespace Backend_API
 
 
             // Country
-            CreateMap<Country, CountryDTO>().ReverseMap();
+            CreateMap<Country, CountryDTO>()
+                .ForMember(dest => dest.Provinces, opt => opt.MapFrom(src => src.Provinces != null ? src.Provinces : null));
+            CreateMap<CountryDTO, Country>();
 
             // Coupon
             CreateMap<Coupon, CountryDTO>().ReverseMap();
