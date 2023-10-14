@@ -8,12 +8,16 @@ namespace Backend_API.DTOs
 
         public int ProductId { get; set; }
 
+        public string ProductName { get; set; } = null!;
+
+        public string ProductSlug { get; set; } = null!;
+
+        public string ProductThumbnail { get; set; } = null!;
+
         public int Quantity { get; set; }
 
         public decimal Price { get; set; }
 
-        public virtual OrderDTO Order { get; set; } = null!;
-
-        public virtual ProductDTO Product { get; set; } = null!;
+        public int? ReturnQuantity { get; set; }
     }
 }

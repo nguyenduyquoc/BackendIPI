@@ -15,19 +15,11 @@ public partial class ReturnRequest
 
     public decimal RefundAmount { get; set; }
 
-    public string Media1 { get; set; } = null!;
-
-    public string? Media2 { get; set; }
-
-    public string? Media3 { get; set; }
-
-    public string? Media4 { get; set; }
-
-    public string? Media5 { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
     public virtual Order Order { get; set; } = null!;
+
+    public virtual ReturnRequestImage? ReturnRequestImage { get; set; }
 }

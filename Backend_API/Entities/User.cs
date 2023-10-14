@@ -29,8 +29,6 @@ public partial class User
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual Admin? Admin { get; set; }
-
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();

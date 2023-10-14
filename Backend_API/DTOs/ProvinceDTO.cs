@@ -10,7 +10,7 @@ namespace Backend_API.DTOs
 
         public int CountryId { get; set; }
 
-        public virtual CountryDTO Country { get; set; } = null!;
+        public string? CountryName { get; set; }
 
         public List<DistrictDTO>? Districts { get; set; }
     }

@@ -10,9 +10,11 @@ namespace Backend_API.DTOs
 
         public decimal? DeliveryFee { get; set; }
 
+        public string? DeliveryType { get; set; }
+
         public int ProvinceId { get; set; }
 
-        public virtual ProvinceDTO Province { get; set; } = null!;
+        public string? ProvinceName { get; set; }
 
         public List<UserAddressDTO>? UserAddresses { get; set; }
     }

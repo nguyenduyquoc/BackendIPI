@@ -23,6 +23,7 @@ namespace Backend_API.Controllers
 
         // // GET LIST OF COUNTRY
         [HttpGet]
+        [Route("get_countries")]
         public async Task<ActionResult<IEnumerable<CountryDTO>>> GetCountries()
         {
             var countries = await _context.Countries
@@ -41,7 +42,7 @@ namespace Backend_API.Controllers
 
         // FIND BY ID
         [HttpGet]
-        [Route("get-by-id")]
+        [Route("get_by_id")]
         public async Task<ActionResult<CountryDTO>> GetCountry(int id)
         {
             if (_context.Countries == null)

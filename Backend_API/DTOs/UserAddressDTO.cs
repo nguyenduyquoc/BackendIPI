@@ -12,8 +12,12 @@ namespace Backend_API.DTOs
 
         public int DistrictId { get; set; }
 
-        public virtual DistrictDTO District { get; set; } = null!;
+        public string? DistrictName { get; set; }
 
-        public virtual UserDTO User { get; set; } = null!;
+        public int? ProvinceId { get; set; }
+
+        public string? ProvinceName { get; set; }
+
+        public string? UserName { get; set; }
     }
 }

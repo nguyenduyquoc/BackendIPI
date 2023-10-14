@@ -10,15 +10,11 @@ namespace Backend_API.DTOs
 
         public string Lname { get; set; } = null!;
 
-        public string Password { get; set; } = null!;
-
         public string? Avatar { get; set; }
 
         public string Email { get; set; } = null!;
 
         public string? Phone { get; set; }
-
-        public string? VerificationCode { get; set; }
 
         public bool Subscribe { get; set; }
 
@@ -28,12 +24,8 @@ namespace Backend_API.DTOs
 
         public DateTime? DeletedAt { get; set; }
 
-        public virtual AdminDTO? Admin { get; set; }
-
         public List<OrderDTO>? Orders { get; set; }
 
         public List<UserAddressDTO>? UserAddresses { get; set; }
-
-        public List<ProductDTO>? Products { get; set; }
     }
 }

@@ -41,7 +41,11 @@ public partial class BookstoreContext : DbContext
 
     public virtual DbSet<ReturnRequest> ReturnRequests { get; set; }
 
+    public virtual DbSet<ReturnRequestImage> ReturnRequestImages { get; set; }
+
     public virtual DbSet<Review> Reviews { get; set; }
+
+    public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<Tag> Tags { get; set; }
 
@@ -49,40 +53,67 @@ public partial class BookstoreContext : DbContext
 
     public virtual DbSet<UserAddress> UserAddresses { get; set; }
 
-/*    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Data Source=HOANGQUOCVJP\\SQLEXPRESS;Initial Catalog=Bookstore;Integrated Security=True;TrustServerCertificate=True");
-*/
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Admin>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__admins__3213E83F3DD73903");
+            entity.HasKey(e => e.Id).HasName("PK__admins__3213E83F21E44BFA");
 
             entity.ToTable("admins");
 
-            entity.HasIndex(e => e.UserId, "UQ__admins__B9BE370EA51B77DE").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__admins__AB6E616402917B58").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Role)
-                .HasMaxLength(50)
+            entity.Property(e => e.Avatar)
+                .HasMaxLength(255)
                 .IsUnicode(false)
-                .HasColumnName("role");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
+                .HasColumnName("avatar");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
+            entity.Property(e => e.DeletedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("deleted_at");
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("email");
+            entity.Property(e => e.Fname)
+                .HasMaxLength(255)
+                .HasColumnName("fname");
+            entity.Property(e => e.Lname)
+                .HasMaxLength(255)
+                .HasColumnName("lname");
+            entity.Property(e => e.Password)
+                .HasColumnType("ntext")
+                .HasColumnName("password");
+            entity.Property(e => e.Phone)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("phone");
+            entity.Property(e => e.RoleId).HasColumnName("role_id");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("updated_at");
 
-            entity.HasOne(d => d.User).WithOne(p => p.Admin)
-                .HasForeignKey<Admin>(d => d.UserId)
+            entity.HasOne(d => d.Role).WithMany(p => p.Admins)
+                .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__admins__user_id__440B1D61");
+                .HasConstraintName("FK__admins__role_id__4C6B5938");
         });
 
         modelBuilder.Entity<Author>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__authors__3213E83F8A6E81F8");
+            entity.HasKey(e => e.Id).HasName("PK__authors__3213E83F5373AFE4");
 
             entity.ToTable("authors");
 
-            entity.HasIndex(e => e.Slug, "UQ__authors__32DD1E4C148ED911").IsUnique();
+            entity.HasIndex(e => e.Slug, "UQ__authors__32DD1E4C6440F2DE").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Avatar)
@@ -100,13 +131,13 @@ public partial class BookstoreContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__categori__3213E83F22BB7475");
+            entity.HasKey(e => e.Id).HasName("PK__categori__3213E83F21F8E82F");
 
             entity.ToTable("categories");
 
-            entity.HasIndex(e => e.Slug, "UQ__categori__32DD1E4C78160CE2").IsUnique();
+            entity.HasIndex(e => e.Slug, "UQ__categori__32DD1E4C6BABEDED").IsUnique();
 
-            entity.HasIndex(e => e.Name, "UQ__categori__72E12F1BFBD9BD4D").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__categori__72E12F1B8845DDC4").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CreatedAt)
@@ -130,12 +161,12 @@ public partial class BookstoreContext : DbContext
 
             entity.HasOne(d => d.Parent).WithMany(p => p.InverseParent)
                 .HasForeignKey(d => d.ParentId)
-                .HasConstraintName("FK__categorie__paren__1273C1CD");
+                .HasConstraintName("FK__categorie__paren__71D1E811");
         });
 
         modelBuilder.Entity<Country>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__countrie__3213E83FE11097B4");
+            entity.HasKey(e => e.Id).HasName("PK__countrie__3213E83F705F8AFB");
 
             entity.ToTable("countries");
 
@@ -147,11 +178,11 @@ public partial class BookstoreContext : DbContext
 
         modelBuilder.Entity<Coupon>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__coupons__3213E83F07EFDC50");
+            entity.HasKey(e => e.Id).HasName("PK__coupons__3213E83F85BAA69E");
 
             entity.ToTable("coupons");
 
-            entity.HasIndex(e => e.Code, "UQ__coupons__357D4CF98859209C").IsUnique();
+            entity.HasIndex(e => e.Code, "UQ__coupons__357D4CF93DEF93A1").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Code)
@@ -192,7 +223,7 @@ public partial class BookstoreContext : DbContext
 
         modelBuilder.Entity<District>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__district__3213E83F316342E5");
+            entity.HasKey(e => e.Id).HasName("PK__district__3213E83FC15417BD");
 
             entity.ToTable("districts");
 
@@ -200,6 +231,9 @@ public partial class BookstoreContext : DbContext
             entity.Property(e => e.DeliveryFee)
                 .HasColumnType("decimal(16, 4)")
                 .HasColumnName("delivery_fee");
+            entity.Property(e => e.DeliveryType)
+                .HasMaxLength(50)
+                .HasColumnName("delivery_type");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
                 .HasColumnName("name");
@@ -208,16 +242,16 @@ public partial class BookstoreContext : DbContext
             entity.HasOne(d => d.Province).WithMany(p => p.Districts)
                 .HasForeignKey(d => d.ProvinceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__districts__provi__37A5467C");
+                .HasConstraintName("FK__districts__provi__17036CC0");
         });
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__orders__3213E83FBB9297FB");
+            entity.HasKey(e => e.Id).HasName("PK__orders__3213E83F8CFC26E3");
 
             entity.ToTable("orders");
 
-            entity.HasIndex(e => e.Code, "UQ__orders__357D4CF9D8AEE360").IsUnique();
+            entity.HasIndex(e => e.Code, "UQ__orders__357D4CF9038C8FA0").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Address)
@@ -283,7 +317,7 @@ public partial class BookstoreContext : DbContext
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__orders__user_id__5441852A");
+                .HasConstraintName("FK__orders__user_id__2FCF1A8A");
         });
 
         modelBuilder.Entity<OrderProduct>(entity =>
@@ -298,27 +332,28 @@ public partial class BookstoreContext : DbContext
                 .HasColumnType("decimal(16, 4)")
                 .HasColumnName("price");
             entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.ReturnQuantity).HasColumnName("return_quantity");
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderProducts)
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__order_pro__order__5812160E");
+                .HasConstraintName("FK__order_pro__order__339FAB6E");
 
             entity.HasOne(d => d.Product).WithMany(p => p.OrderProducts)
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__order_pro__produ__59063A47");
+                .HasConstraintName("FK__order_pro__produ__3493CFA7");
         });
 
         modelBuilder.Entity<Product>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__products__3213E83FACC59418");
+            entity.HasKey(e => e.Id).HasName("PK__products__3213E83F8957C5B4");
 
             entity.ToTable("products");
 
-            entity.HasIndex(e => e.Slug, "UQ__products__32DD1E4CBA8E7967").IsUnique();
+            entity.HasIndex(e => e.Slug, "UQ__products__32DD1E4C925F121A").IsUnique();
 
-            entity.HasIndex(e => e.Name, "UQ__products__72E12F1B92C62F9F").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__products__72E12F1B35A1C095").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.AuthorId).HasColumnName("author_id");
@@ -363,12 +398,12 @@ public partial class BookstoreContext : DbContext
             entity.HasOne(d => d.Author).WithMany(p => p.Products)
                 .HasForeignKey(d => d.AuthorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__products__author__1FCDBCEB");
+                .HasConstraintName("FK__products__author__7F2BE32F");
 
             entity.HasOne(d => d.Publisher).WithMany(p => p.Products)
                 .HasForeignKey(d => d.PublisherId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__products__publis__20C1E124");
+                .HasConstraintName("FK__products__publis__00200768");
 
             entity.HasMany(d => d.Categories).WithMany(p => p.Products)
                 .UsingEntity<Dictionary<string, object>>(
@@ -376,11 +411,11 @@ public partial class BookstoreContext : DbContext
                     r => r.HasOne<Category>().WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__product_c__categ__286302EC"),
+                        .HasConstraintName("FK__product_c__categ__07C12930"),
                     l => l.HasOne<Product>().WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__product_c__produ__276EDEB3"),
+                        .HasConstraintName("FK__product_c__produ__06CD04F7"),
                     j =>
                     {
                         j.HasKey("ProductId", "CategoryId").HasName("pk_product_category");
@@ -395,11 +430,11 @@ public partial class BookstoreContext : DbContext
                     r => r.HasOne<Tag>().WithMany()
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__product_t__tag_i__300424B4"),
+                        .HasConstraintName("FK__product_t__tag_i__0F624AF8"),
                     l => l.HasOne<Product>().WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__product_t__produ__2F10007B"),
+                        .HasConstraintName("FK__product_t__produ__0E6E26BF"),
                     j =>
                     {
                         j.HasKey("ProductId", "TagId").HasName("pk_product_tag");
@@ -414,11 +449,11 @@ public partial class BookstoreContext : DbContext
                     r => r.HasOne<User>().WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__liked_pro__user___47DBAE45"),
+                        .HasConstraintName("FK__liked_pro__user___236943A5"),
                     l => l.HasOne<Product>().WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__liked_pro__produ__46E78A0C"),
+                        .HasConstraintName("FK__liked_pro__produ__22751F6C"),
                     j =>
                     {
                         j.HasKey("ProductId", "UserId").HasName("pk_like_product");
@@ -430,7 +465,7 @@ public partial class BookstoreContext : DbContext
 
         modelBuilder.Entity<ProductImage>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__product___3213E83FF23889B8");
+            entity.HasKey(e => e.Id).HasName("PK__product___3213E83F73C63493");
 
             entity.ToTable("product_images");
 
@@ -444,12 +479,12 @@ public partial class BookstoreContext : DbContext
             entity.HasOne(d => d.Product).WithMany(p => p.ProductImages)
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__product_i__produ__24927208");
+                .HasConstraintName("FK__product_i__produ__03F0984C");
         });
 
         modelBuilder.Entity<Province>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__province__3213E83FD66E3AFC");
+            entity.HasKey(e => e.Id).HasName("PK__province__3213E83F97C09FC1");
 
             entity.ToTable("provinces");
 
@@ -462,16 +497,16 @@ public partial class BookstoreContext : DbContext
             entity.HasOne(d => d.Country).WithMany(p => p.Provinces)
                 .HasForeignKey(d => d.CountryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__provinces__count__34C8D9D1");
+                .HasConstraintName("FK__provinces__count__14270015");
         });
 
         modelBuilder.Entity<Publisher>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__publishe__3213E83F374770BA");
+            entity.HasKey(e => e.Id).HasName("PK__publishe__3213E83F97EE505F");
 
             entity.ToTable("publishers");
 
-            entity.HasIndex(e => e.Slug, "UQ__publishe__32DD1E4C0D8AFAAE").IsUnique();
+            entity.HasIndex(e => e.Slug, "UQ__publishe__32DD1E4C1AA8A4D6").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name)
@@ -485,37 +520,17 @@ public partial class BookstoreContext : DbContext
 
         modelBuilder.Entity<ReturnRequest>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__return_r__3213E83FC8DB7909");
+            entity.HasKey(e => e.Id).HasName("PK__return_r__3213E83F85A91D6F");
 
             entity.ToTable("return_requests");
 
-            entity.HasIndex(e => e.OrderId, "UQ__return_r__46596228885E5DFD").IsUnique();
+            entity.HasIndex(e => e.OrderId, "UQ__return_r__46596228346B2391").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
-            entity.Property(e => e.Media1)
-                .HasMaxLength(255)
-                .IsUnicode(false)
-                .HasColumnName("media_1");
-            entity.Property(e => e.Media2)
-                .HasMaxLength(255)
-                .IsUnicode(false)
-                .HasColumnName("media_2");
-            entity.Property(e => e.Media3)
-                .HasMaxLength(255)
-                .IsUnicode(false)
-                .HasColumnName("media_3");
-            entity.Property(e => e.Media4)
-                .HasMaxLength(255)
-                .IsUnicode(false)
-                .HasColumnName("media_4");
-            entity.Property(e => e.Media5)
-                .HasMaxLength(255)
-                .IsUnicode(false)
-                .HasColumnName("media_5");
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.RefundAmount)
                 .HasColumnType("decimal(16, 4)")
@@ -531,7 +546,28 @@ public partial class BookstoreContext : DbContext
             entity.HasOne(d => d.Order).WithOne(p => p.ReturnRequest)
                 .HasForeignKey<ReturnRequest>(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__return_re__order__5EBF139D");
+                .HasConstraintName("FK__return_re__order__3A4CA8FD");
+        });
+
+        modelBuilder.Entity<ReturnRequestImage>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__return_r__3213E83F52C377E2");
+
+            entity.ToTable("return_request_images");
+
+            entity.HasIndex(e => e.RequestId, "UQ__return_r__18D3B90E47B37489").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.RequestId).HasColumnName("request_id");
+            entity.Property(e => e.Url)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("url");
+
+            entity.HasOne(d => d.Request).WithOne(p => p.ReturnRequestImage)
+                .HasForeignKey<ReturnRequestImage>(d => d.RequestId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__return_re__reque__40058253");
         });
 
         modelBuilder.Entity<Review>(entity =>
@@ -563,23 +599,38 @@ public partial class BookstoreContext : DbContext
             entity.HasOne(d => d.Order).WithMany(p => p.Reviews)
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__reviews__order_i__6383C8BA");
+                .HasConstraintName("FK__reviews__order_i__42E1EEFE");
 
             entity.HasOne(d => d.Product).WithMany(p => p.Reviews)
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__reviews__product__6477ECF3");
+                .HasConstraintName("FK__reviews__product__43D61337");
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__roles__3213E83F5FBF7AA5");
+
+            entity.ToTable("roles");
+
+            entity.HasIndex(e => e.Name, "UQ__roles__72E12F1BB1C8BC2C").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<Tag>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__tags__3213E83FF95C03E8");
+            entity.HasKey(e => e.Id).HasName("PK__tags__3213E83F3723BE69");
 
             entity.ToTable("tags");
 
-            entity.HasIndex(e => e.Slug, "UQ__tags__32DD1E4C80088C5F").IsUnique();
+            entity.HasIndex(e => e.Slug, "UQ__tags__32DD1E4C6C3FC63E").IsUnique();
 
-            entity.HasIndex(e => e.Name, "UQ__tags__72E12F1B57749ABC").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__tags__72E12F1BD9A8F818").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name)
@@ -593,11 +644,11 @@ public partial class BookstoreContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__users__3213E83F5DF87E6E");
+            entity.HasKey(e => e.Id).HasName("PK__users__3213E83F2C6774F3");
 
             entity.ToTable("users");
 
-            entity.HasIndex(e => e.Email, "UQ__users__AB6E616441D707FA").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__users__AB6E6164DE7C6235").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Avatar)
@@ -639,7 +690,7 @@ public partial class BookstoreContext : DbContext
 
         modelBuilder.Entity<UserAddress>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__user_add__3213E83FA75F25ED");
+            entity.HasKey(e => e.Id).HasName("PK__user_add__3213E83F23787B2D");
 
             entity.ToTable("user_addresses");
 
@@ -653,12 +704,12 @@ public partial class BookstoreContext : DbContext
             entity.HasOne(d => d.District).WithMany(p => p.UserAddresses)
                 .HasForeignKey(d => d.DistrictId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__user_addr__distr__403A8C7D");
+                .HasConstraintName("FK__user_addr__distr__1F98B2C1");
 
             entity.HasOne(d => d.User).WithMany(p => p.UserAddresses)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__user_addr__user___3F466844");
+                .HasConstraintName("FK__user_addr__user___1EA48E88");
         });
 
         OnModelCreatingPartial(modelBuilder);

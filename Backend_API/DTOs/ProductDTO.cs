@@ -4,7 +4,7 @@ namespace Backend_API.DTOs
 {
     public class ProductDTO
     {
-        public int? Id { get; set; }
+        public int Id { get; set; }
 
         public int Status { get; set; }
 
@@ -26,7 +26,11 @@ namespace Backend_API.DTOs
 
         public int AuthorId { get; set; }
 
+        public string? AuthorName { get; set; }
+
         public int PublisherId { get; set; }
+
+        public string? PublisherName { get; set; }
 
         public int PublishYear { get; set; }
 
@@ -34,22 +38,17 @@ namespace Backend_API.DTOs
 
         public DateTime? UpdatedAt { get; set; }
 
-        public DateTime? DeletedAt { get; set; }
+        public virtual ICollection<ProductImageDTO> ProductImages { get; set; } = new List<ProductImageDTO>();
 
-        public virtual AuthorDTO Author { get; set; } = null!;
+        public virtual ICollection<ReviewDTO> Reviews { get; set; } = new List<ReviewDTO>();
 
-        public List<OrderProductDTO>? OrderProducts { get; set; }
+        public virtual ICollection<CategoryDTO> Categories { get; set; } = new List<CategoryDTO>();
 
-        public List<ProductImageDTO>? ProductImages { get; set; }
+        public virtual ICollection<TagDTO> Tags { get; set; } = new List<TagDTO>();
 
-        public virtual Publisher Publisher { get; set; } = null!;
+        public decimal Rating { get; set; }
 
-        public List<ReviewDTO>? Reviews { get; set; }
+        public int SoldQuantity { get; set; }
 
-        public List<CategoryDTO>? Categories { get; set; }
-
-        public List<TagDTO>? Tags { get; set; }
-
-        public List<UserDTO>? Users { get; set; }
     }
 }

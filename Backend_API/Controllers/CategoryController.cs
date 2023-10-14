@@ -103,7 +103,7 @@ namespace Backend_API.Controllers
 
         // FIND BY ID
         [HttpGet]
-        [Route("get-by-id")]
+        [Route("get_by_id")]
         public async Task<ActionResult<CategoryDTO>> Get(int id)
         {
             var category = await _context.Categories
@@ -179,7 +179,7 @@ namespace Backend_API.Controllers
 
         // PERMANENTLY DELETED ( xoa han)
         [HttpDelete]
-        [Route("permanently deleted")]
+        [Route("permanently_deleted")]
         public async Task<IActionResult> Delete(int id)
         {
             if (_context.Categories == null)
@@ -251,7 +251,8 @@ namespace Backend_API.Controllers
 
 
         // RESTORE
-        [HttpPatch("restore/{id}")]
+        [HttpPatch]
+        [Route("restore")]
         public async Task<IActionResult> RestoreCategory(int id)
         {
             var category = await _context.Categories.FindAsync(id);

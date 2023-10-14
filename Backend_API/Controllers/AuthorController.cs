@@ -22,6 +22,7 @@ namespace Backend_API.Controllers
 
         // GET LIST AUTHORs
         [HttpGet]
+        [Route("get_authors")]
         public async Task<ActionResult<IEnumerable<AuthorDTO>>> Index()
         {
             var authors = await _context.Authors
