@@ -12,6 +12,5 @@ namespace Backend_API.DTOs
 
         public string? Avatar { get; set; }
 
-        public List<ProductDTO>? Products { get; set; }
     }
 }

@@ -10,6 +10,6 @@ namespace Backend_API.DTOs
 
         public string Slug { get; set; } = null!;
 
-        public List<ProductDTO>? Products { get; set; }
+        /*public List<ProductDTO>? Products { get; set; }*/
     }
 }
