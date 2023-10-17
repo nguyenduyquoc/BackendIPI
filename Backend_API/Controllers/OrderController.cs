@@ -190,7 +190,7 @@ namespace Backend_API.Controllers
                 order.Status = 1;
                 order.UpdatedAt = DateTime.Now;
 
-                // Reduce the quantity of each gift in the OrderProduct array
+                // Reduce the quantity of each product in the OrderProduct array
                 foreach (var orderProduct in order.OrderProducts)
                 {
                     var product = await _context.Products.FindAsync(orderProduct.ProductId);
@@ -199,6 +199,17 @@ namespace Backend_API.Controllers
                         // Reduce the product quantity based on the OrderProduct's quantity
                         product.Quantity -= orderProduct.Quantity;
                         _context.Entry(product).State = EntityState.Modified;
+                    }
+                }
+
+                // Reduce the quantity of coupon if coupon is applied
+                if (!string.IsNullOrEmpty(order.CouponCode))
+                {
+                    var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Code == order.CouponCode);
+                    if (coupon != null)
+                    {
+                        coupon.Quantity -= 1;
+                        _context.Entry(coupon).State = EntityState.Modified;
                     }
                 }
 
@@ -219,6 +230,27 @@ namespace Backend_API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            foreach (var orderProduct in model.OrderProducts)
+            {
+                // Validate product quantity
+                var product = await _context.Products.FindAsync(orderProduct.ProductId);
+                if (product == null || product.Quantity < orderProduct.Quantity)
+                {
+                    return BadRequest("Not enough stock for a product in the order.");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(model.CouponCode))
+            {
+                // Validate the coupon quantity
+                var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Code == model.CouponCode);
+
+                if (coupon == null || coupon.Quantity == 0)
+                {
+                    return BadRequest("Coupon code has been use up.");
+                }
+            }
 
             var order = _mapper.Map<Order>(model);
 

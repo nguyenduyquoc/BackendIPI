@@ -164,9 +164,3 @@ namespace Backend_API
         }
     }
 }
-
-/*
-.ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.Categories != null ? src.Categories : null))
-                .ForMember(dest => dest.ProductImages, opt => opt.MapFrom(src => src.ProductImages != null ? src.ProductImages : null))
-                .ForMember(dest => dest.Reviews, opt => opt.MapFrom(src => src.Reviews != null ? src.Reviews : null))
-                .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags != null ? src.Tags : null))*/
