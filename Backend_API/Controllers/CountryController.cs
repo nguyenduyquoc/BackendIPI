@@ -71,8 +71,9 @@ namespace Backend_API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var countries = _context.Countries.ToList();
             //Check if country with the same name already exists
-            if (_context.Countries.Any(c => c.Name == countryDTO.Name))
+            if (countries.Any(c => string.Equals(c.Name, countryDTO.Name, StringComparison.OrdinalIgnoreCase)))
             {
                 return BadRequest("A country with the same name already exists.");
             }

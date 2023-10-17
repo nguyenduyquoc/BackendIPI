@@ -10,13 +10,13 @@
 
         public decimal? MaxPrice { get; set; }
 
-        public List<int> CategoryIds { get; set; }
+        public List<int>? CategoryIds { get; set; }
 
-        public List<int> AuthorIds { get; set; }
+        public List<int>? AuthorIds { get; set; }
 
-        public List<int> PublisherIds { get; set; }
+        public List<int>? PublisherIds { get; set; }
 
-        public List<int> PublishYears { get; set; }
+        public List<int>? PublishYears { get; set; }
 
         public string? SortBy { get; set; }
 

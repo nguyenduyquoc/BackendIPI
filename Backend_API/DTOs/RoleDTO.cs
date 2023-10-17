@@ -2,7 +2,7 @@
 
 namespace Backend_API.DTOs
 {
-    public class RoloDTO
+    public class RoleDTO
     {
         public int Id { get; set; }
 

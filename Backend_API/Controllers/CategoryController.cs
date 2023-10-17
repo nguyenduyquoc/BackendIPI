@@ -1,10 +1,11 @@
 ﻿using AutoMapper;
 using Backend_API.DTOs;
 using Backend_API.Entities;
+using Backend_API.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+
 
 namespace Backend_API.Controllers
 {
@@ -129,12 +130,13 @@ namespace Backend_API.Controllers
         // CREAT NEW A CATEGORY
         [HttpPost]
         [Route("create")]
-        public async Task<ActionResult<CategoryDTO>> Create(CategoryDTO data)
+        public async Task<ActionResult<CategoryDTO>> Create(CategoryCreateModel data)
         {
             if (ModelState.IsValid)
             {
+                var categories = _context.Categories.ToList();
                 //Check if category with the same name already exists
-                if (_context.Categories.Any(c => c.Name == data.Name))
+                if (categories.Any(c => string.Equals(c.Name, data.Name, StringComparison.OrdinalIgnoreCase)))
                 {
                     return BadRequest("A category with the same name already exists.");
                 }
@@ -209,15 +211,10 @@ namespace Backend_API.Controllers
         // UPDATE 
         [HttpPut]
         [Route("update")]
-        public async Task<IActionResult> PutCategory(int id, CategoryDTO categoryDTO)
+        public async Task<IActionResult> PutCategory(int id, CategoryEditModel dataModel)
         {
             if(ModelState.IsValid)
             {
-                if (id != categoryDTO.Id)
-                {
-                    return BadRequest("The id in the URL does not match the id in the request body.");
-                }
-
                 //Check if the category with the given id exists in the database
                 var category = await _context.Categories.FindAsync(id);
                 if (category == null)
@@ -225,8 +222,16 @@ namespace Backend_API.Controllers
                     return NotFound();
                 }
 
+                // Check for duplicate category name (ignore the current category)
+                if (_context.Categories.Any(c => c.Name == dataModel.Name && c.Id != id))
+                {
+                    return BadRequest("A category with the same name already exists.");
+                }
+
                 //Map the properties from the CategoryDTO to the existing Category entity
-                _mapper.Map(categoryDTO, category);
+                _mapper.Map(dataModel, category);
+
+                category.UpdatedAt= DateTime.Now;
 
                 try
                 {

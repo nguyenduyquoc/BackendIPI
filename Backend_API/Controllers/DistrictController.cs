@@ -69,9 +69,9 @@ namespace Backend_API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
+            var districts = _context.Districts.ToList();
             //Check if district with the same name already exists
-            if (_context.Districts.Any(c => c.Name == districtDTO.Name))
+            if (districts.Any(c => string.Equals(c.Name, districtDTO.Name, StringComparison.OrdinalIgnoreCase)))
             {
                 return BadRequest("A district with the same name already exists.");
             }
@@ -116,9 +116,9 @@ namespace Backend_API.Controllers
         [Route("update")]
         public async Task<IActionResult> PutDistrict(int id, DistrictDTO districtDTO)
         {
-            if (id != districtDTO.Id)
+            if (ModelState.IsValid)
             {
-                return BadRequest("The id in the URL does not match the id in the request body.");
+                return BadRequest();
             }
 
             //Check if the district with the given id exists in the database
@@ -126,6 +126,12 @@ namespace Backend_API.Controllers
             if (district == null)
             {
                 return NotFound();
+            }
+
+            // Check for duplicate district name (ignore the current district)
+            if (_context.Districts.Any(d => d.Name == districtDTO.Name && d.Id != id))
+            {
+                return BadRequest("A category with the same name already exists.");
             }
 
             //Map the properties from the DistrictDTO to the existing District entity

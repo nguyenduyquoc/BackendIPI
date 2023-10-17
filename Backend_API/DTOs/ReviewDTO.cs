@@ -18,8 +18,8 @@ namespace Backend_API.DTOs
 
         public DateTime? UpdatedAt { get; set; }
 
-        public virtual OrderDTO Order { get; set; } = null!;
+        /*public virtual OrderDTO Order { get; set; } = null!;
 
-        public virtual ProductDTO Product { get; set; } = null!;
+        public virtual ProductDTO Product { get; set; } = null!;*/
     }
 }

@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using Backend_API.DTOs;
 using Backend_API.Entities;
+using Backend_API.ViewModels;
+using System.Text.RegularExpressions;
 
 namespace Backend_API
 {
@@ -15,10 +17,18 @@ namespace Backend_API
                 .ForMember(dest => dest.InverseParent, opt => opt.MapFrom(src => src.InverseParent != null ? src.InverseParent : null));
             CreateMap<CategoryDTO, Category>();
 
+            CreateMap<CategoryCreateModel, Category>()
+                .ForMember(dest => dest.Slug, opt => opt.MapFrom(src => Slugify(src.Name)));
+            CreateMap<CategoryEditModel, Category>()
+                .ForMember(dest => dest.Slug, opt => opt.MapFrom(src => Slugify(src.Name)))
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
+
             // Author
-            CreateMap<Author, AuthorDTO>()
-                .ForMember(dest => dest.Products, opt => opt.MapFrom(src => src.Products));
-            CreateMap<AuthorDTO, Author>();
+            CreateMap<Author, AuthorDTO>().ReverseMap();
+            CreateMap<AuthorCreateModel, Author>()
+                .ForMember(dest => dest.Slug, opt => opt.MapFrom(src => Slugify(src.Name)));
+            CreateMap<AuthorEditModel, Author>()
+                .ForMember(dest => dest.Slug, opt => opt.MapFrom(src => Slugify(src.Name)));
 
 
             // Country
@@ -27,15 +37,20 @@ namespace Backend_API
             CreateMap<CountryDTO, Country>();
 
             // Coupon
-            CreateMap<Coupon, CountryDTO>().ReverseMap();
+            CreateMap<Coupon, CouponDTO>().ReverseMap();
+            CreateMap<CouponCreateModel, Coupon>();
+            CreateMap<CouponEditModel, Coupon>();
 
             // District
             CreateMap<District, DistrictDTO>()
                 .ForMember(dest => dest.UserAddresses, opt => opt.MapFrom(src => src.UserAddresses != null ? src.UserAddresses : null))
                 .ForMember(dest => dest.ProvinceName, opt => opt.MapFrom(src => src.Province != null ? src.Province.Name : null));
             CreateMap<DistrictDTO, District>();
+
             // Order
             CreateMap<Order, OrderDTO>().ReverseMap();
+            CreateMap<OrderCreateModel, Order>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now));
 
             //OrderProduct
             CreateMap<OrderProduct, OrderProductDTO>().ReverseMap();
@@ -56,9 +71,15 @@ namespace Backend_API
                 });
             CreateMap<ProductDTO, Product>();
 
+            CreateMap<ProductCreateModel, Product>()
+                .ForMember(dest => dest.Slug, opt => opt.MapFrom(src => Slugify(src.Name)));
+            CreateMap<ProductEditModel, Product>()
+                .ForMember(dest => dest.Slug, opt => opt.MapFrom(src => Slugify(src.Name)));
+
 
             // ProductImage
             CreateMap<ProductImage, ProductImageDTO>().ReverseMap();
+            CreateMap<ProductImageCreateModel, ProductImage>();
 
             // Province
             CreateMap<Province, ProvinceDTO>()
@@ -68,24 +89,41 @@ namespace Backend_API
 
             // Publisher
             CreateMap<Publisher, PublisherDTO>().ReverseMap();
+            CreateMap<PublisherEditModel, Publisher>()
+                .ForMember(dest => dest.Slug, opt => opt.MapFrom(src => Slugify(src.Name)));
+            CreateMap<PublisherCreateModel, Publisher>()
+                 .ForMember(dest => dest.Slug, opt => opt.MapFrom(src => Slugify(src.Name)));
 
             // ReturnRequest
             CreateMap<ReturnRequest, ReturnRequestDTO>().ReverseMap();
 
             // Review
             CreateMap<Review, ReviewDTO>().ReverseMap();
+            CreateMap<ReviewCreateModel, Review>();
+            CreateMap<ReviewEditModel, Review>();
 
             // Admin
             CreateMap<Admin, AdminDTO>().ReverseMap();
 
             // Tag
             CreateMap<Tag, TagDTO>().ReverseMap();
+            CreateMap<TagCreateModel, Tag>()
+                .ForMember(dest => dest.Slug, opt => opt.MapFrom(src => Slugify(src.Name)));
 
             // User
             CreateMap<User, UserDTO>().ReverseMap();
 
             // UserAddress
             CreateMap<UserAddress, UserAddressDTO>().ReverseMap();
+
+            CreateMap<UserAddress, UserAddressDTO>()
+                .ForMember(dest => dest.DistrictId, opt => opt.MapFrom(src => src.District.Id))
+                .ForMember(dest => dest.DistrictName, opt => opt.MapFrom(src => src.District.Name))
+                .ForMember(dest => dest.ProvinceId, opt => opt.MapFrom(src => src.District.Province.Id))
+                .ForMember(dest => dest.ProvinceName, opt => opt.MapFrom(src => src.District.Province.Name));
+            CreateMap<UserAddressDTO, UserAddress>();
+            CreateMap<UserAddressCreateModel, UserAddress>();
+            CreateMap<UserAddressEditModel, UserAddress>();
 
         }
 
@@ -115,6 +153,15 @@ namespace Backend_API
 
             return soldQuantity;
         }*/
+
+        private static string Slugify(string text)
+        {
+            string slug = text.ToLower(); // Convert text to lowercase
+            slug = Regex.Replace(slug, @"\s", "-"); // Replace spaces with dashes
+            slug = Regex.Replace(slug, @"[^a-z0-9\-]", ""); // Remove special characters
+
+            return slug;
+        }
     }
 }
 

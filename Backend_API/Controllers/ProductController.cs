@@ -7,7 +7,6 @@ using System.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Backend_API.Controllers
 {
@@ -27,7 +26,7 @@ namespace Backend_API.Controllers
         // GET LIST OF PRODUCT THAT HAVE NOT BEEN DELETED
         [HttpPost]
         [Route("get_all_products")]
-        public async Task<ActionResult<ListProductDTO>> GetProducts(
+        public async Task<ActionResult<ProductListDTO>> GetProducts(
             [FromBody] ProductFiterRequest filterRequest
         )
         {
@@ -38,6 +37,8 @@ namespace Backend_API.Controllers
                 .Include(p => p.ProductImages)
                 .Include(p => p.Reviews)
                 .Include(p => p.Tags)
+                .Include(p => p.OrderProducts)
+                    .ThenInclude(op => op.Order)
                 .Where(c => c.DeletedAt == null);
 
             // Apply filters
@@ -89,6 +90,14 @@ namespace Backend_API.Controllers
                 case "highestdiscount":
                     query = query.OrderByDescending(p => p.DiscountAmount ?? 0);
                     break;
+                case "highestrating":
+                    query = query.OrderByDescending(p => CalculateAverageRating(p.Reviews.ToList()));
+                    break;
+                case "bestseller":
+                    query = query.OrderByDescending(p => p.OrderProducts
+                        .Where(op => op.Order != null && op.Order.Status == 4)
+                        .Sum(op => op.Quantity));
+                    break;
                 // Add other sorting options here
                 default:
                     // Default sorting by created date (newest first)
@@ -134,7 +143,7 @@ namespace Backend_API.Controllers
             // Map entities to DTOs
             var productDTOs = _mapper.Map<List<ProductDTO>>(products);
 
-            var response = new ListProductDTO
+            var response = new ProductListDTO
             {
                 Products = productDTOs,
                 TotalPages = totalPages,
@@ -225,19 +234,19 @@ namespace Backend_API.Controllers
         // CREAT NEW PRODUCT
         [HttpPost]
         [Route("create")]
-        public async Task<ActionResult<ProductDTO>> PostProduct(ProductDTO productDTO)
+        public async Task<ActionResult<ProductDTO>> PostProduct(ProductCreateModel productData)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
+            var products = _context.Products.ToList();
             //Check if product with the same name already exists
-            if (_context.Products.Any(c => c.Name == productDTO.Name))
+            if (products.Any(c => string.Equals(c.Name,  productData.Name, StringComparison.OrdinalIgnoreCase)))
             {
                 return BadRequest("A product with the same name already exists.");
             }
 
             //Map ProductDTO to Product
-            var product = _mapper.Map<Product>(productDTO);
+            var product = _mapper.Map<Product>(productData);
 
             // Set the CreatedAt property to the current date and time
             product.CreatedAt = DateTime.UtcNow;
@@ -332,11 +341,12 @@ namespace Backend_API.Controllers
         // UPDATE PRODUCT
         [HttpPut]
         [Route("update")]
-        public async Task<IActionResult> PutProduct(int id, ProductDTO productDTO)
+        public async Task<IActionResult> PutProduct(int id, ProductEditModel productData)
         {
-            if (id != productDTO.Id)
+
+            if (!ModelState.IsValid)
             {
-                return BadRequest("The id in the URL does not match the id in the request body.");
+                return BadRequest();
             }
 
             //Check if the products with the given id exists in the database
@@ -346,8 +356,14 @@ namespace Backend_API.Controllers
                 return NotFound();
             }
 
+            // Check for duplicate product name (ignore the current product)
+            if (_context.Products.Any(p => p.Name == productData.Name && p.Id != id))
+            {
+                return BadRequest("A category with the same name already exists.");
+            }
+
             //Map the properties from the DTO to the existing entity
-            _mapper.Map(productDTO, product);
+            _mapper.Map(productData, product);
 
             // Set the "updatedAt" property to the current datetime
             product.UpdatedAt = DateTime.UtcNow;
@@ -374,6 +390,33 @@ namespace Backend_API.Controllers
         private bool ProductExists(int id)
         {
             return (_context.Products?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+
+        // LAY TAT CA CAC NAM SAN XUAT BAN DE LOC
+        [HttpGet("publish-years")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllPublishYears()
+        {
+            var publishYears = await _context.Products
+                .Where(p => p.PublishYear != 0)
+                .Select(p => p.PublishYear)
+                .Distinct()
+                .OrderBy(year => year)
+                .ToArrayAsync();
+
+            return Ok(publishYears);
+        }
+
+
+        private decimal CalculateAverageRating(List<Review> reviews)
+        {
+            if (reviews == null || reviews.Count == 0)
+            {
+                return 0; // or another default value
+            }
+
+            decimal totalRating = reviews.Sum(r => r.Rating);
+            return totalRating / reviews.Count;
         }
     }
 }

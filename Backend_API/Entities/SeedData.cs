@@ -33,6 +33,37 @@ namespace Backend_API.Entities
             return hasData;
         }
 
+
+        private static void SeedAdmins(BookstoreContext context)
+        {
+            ///Seed 1 manager 
+            var admin = new Admin
+            {
+                Fname = "John",
+                Lname = "Doe",
+                Password = HashPassword("password"),
+                Avatar = "https://res.cloudinary.com/dxcyeb8km/image/upload/v1689147696/sem3/avatar_ga15mg.png",
+                Email = "admin@email.com",
+                Phone = "0999888777",
+                RoleId = 1
+            };
+            context.Admins.Add(admin);
+
+            //Seed 1 staffs
+            var staff = new Admin
+            {
+                Fname = "Jenny",
+                Lname = "Smith",
+                Password = HashPassword("password"),
+                Avatar = "https://res.cloudinary.com/dxcyeb8km/image/upload/v1689147437/sem3/avatar_2_l9le4z.jpg",
+                Email = "staff@email.com",
+                Phone = "0111333555",
+                RoleId = 2
+            };
+            context.Admins.Add(staff);
+
+            context.SaveChanges();
+        }
         private static void SeedUsers(BookstoreContext context)
         {
             var avatarUrls = new[]
@@ -50,38 +81,7 @@ namespace Backend_API.Entities
             };
             var random = new Random();
 
-            //Seed 1 admin user (id = 1)
-            var admin = new User
-            {
-                Fname = "John",
-                Lname = "Doe",
-                Password = HashPassword("password"),
-                Avatar = "https://res.cloudinary.com/dxcyeb8km/image/upload/v1689147696/sem3/avatar_ga15mg.png",
-                Email = "admin@email.com",
-                Phone = "0999888777",
-                Subscribe = false,
-                /*CreatedAt = DateTime.UtcNow*/
-            };
-            context.Users.Add(admin);
-
-            //Seed 5 staff users (id = 2 - 6)
-            for (int i = 1; i <= 5; i++)
-            {
-                var staff = new User
-                {
-                    Fname = Faker.Name.First(),
-                    Lname = Faker.Name.Last(),
-                    Password = HashPassword("password"),
-                    Avatar = avatarUrls[random.Next(avatarUrls.Length)],
-                    Email = "staff" + i + "@email.com",
-                    Phone = Faker.Identification.UsPassportNumber(),
-                    Subscribe = false,
-                    /*CreatedAt = DateTime.UtcNow*/
-                };
-                context.Users.Add(staff);
-            }
-
-            //Seed 50 users (id = 7 - 56)
+            //Seed 50 users (id = 1 - 50)
             for (int i = 0; i < 50; i++)
             {
                 var user = new User
@@ -103,7 +103,7 @@ namespace Backend_API.Entities
         private static void SeedUserAddresses(BookstoreContext context)
         {
             var random = new Random();
-            for (int i = 7; i <= 56; i++)
+            for (int i = 1; i <= 50; i++)
             {
                 var addresses = new[]
                 {
@@ -124,28 +124,6 @@ namespace Backend_API.Entities
             }
         }
 
-        private static void SeedAdmins(BookstoreContext context)
-        {
-            //Seed 1 admin
-            var admin = new Admin
-            {
-                UserId = 1,
-                Role = "ADMIN"
-            };
-            context.Admins.Add(admin);
-
-            //Seed 5 staffs
-            for (int i = 0; i < 5; i++)
-            {
-                var staff = new Admin
-                {
-                    UserId = i + 2,
-                    Role = "STAFF"
-                };
-                context.Admins.Add(staff);
-            }
-            context.SaveChanges();
-        }
 
         private static void SeedOrders(BookstoreContext context)
         {

@@ -8,6 +8,8 @@ namespace Backend_API.DTOs
 
         public int UserId { get; set; }
 
+        public string? UserName { get; set; }
+
         public string? Address { get; set; }
 
         public int DistrictId { get; set; }
@@ -17,7 +19,5 @@ namespace Backend_API.DTOs
         public int? ProvinceId { get; set; }
 
         public string? ProvinceName { get; set; }
-
-        public string? UserName { get; set; }
     }
 }

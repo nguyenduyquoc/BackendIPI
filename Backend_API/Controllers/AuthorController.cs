@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
 using Backend_API.DTOs;
 using Backend_API.Entities;
+using Backend_API.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+
 
 namespace Backend_API.Controllers
 {
@@ -25,11 +28,11 @@ namespace Backend_API.Controllers
         [Route("get_authors")]
         public async Task<ActionResult<IEnumerable<AuthorDTO>>> Index()
         {
-            var authors = await _context.Authors
-                .Include(a => a.Products)
-                .ToListAsync();
+            var query = _context.Authors;
 
-            if(authors == null || authors.Count == 0)
+            var authors = await query.ToListAsync();
+
+            if (authors == null || authors.Count == 0)
             {
                 return NotFound();
             }
@@ -38,6 +41,7 @@ namespace Backend_API.Controllers
 
             return Ok(authorDTOs);
         }
+
 
         // fIND BY ID 
         [HttpGet]
@@ -61,12 +65,15 @@ namespace Backend_API.Controllers
         // CREAT NEW AUTHOR
         [HttpPost]
         [Route("create")]
-        public async Task<ActionResult<AuthorDTO>> Create(AuthorDTO data)
+        public async Task<ActionResult<AuthorDTO>> Create(AuthorCreateModel data)
         {
             if (ModelState.IsValid)
             {
+                var authors = _context.Authors.ToList();
                 // Check if author with the same name already exists
-                if (_context.Authors.Any(a => a.Name == data.Name))
+                if (authors.Any(a => a.Name != null && a.Name.Equals(data.Name, StringComparison.OrdinalIgnoreCase)))
+                    
+                // StringComparison.OrdinalIgnoreCase: so sanh k phan biet chu hoa hay chu thuong
                 {
                     return BadRequest("A author with the same name already exists.");
                 }
@@ -78,7 +85,7 @@ namespace Backend_API.Controllers
 
                 // Map the created author back to AuthorDTO and return it in the response
                 var createdAuthorDTO = _mapper.Map<AuthorDTO>(author);
-                return CreatedAtAction(nameof(Get), new { id = author.Id });
+                return CreatedAtAction("Get", new { id = author.Id }, createdAuthorDTO);
             }
 
             return BadRequest();
@@ -109,13 +116,12 @@ namespace Backend_API.Controllers
         // UPDATE 
         [HttpPut]
         [Route("update")]
-        public async Task<IActionResult> PutAuthor(int id, AuthorDTO authorDTO)
+        public async Task<IActionResult> PutAuthor(int id, AuthorEditModel editAuthor)
         {
-            if (id != authorDTO.Id)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("The id in the URL does not match the id in the request body.");
+                return BadRequest(ModelState);
             }
-
             //Check if the author with the given id exists in the database
             var author = await _context.Authors.FindAsync(id);
             if (author == null)
@@ -123,8 +129,14 @@ namespace Backend_API.Controllers
                 return NotFound();
             }
 
+            // Check for duplicate author name (ignore the current author)
+            if (_context.Authors.Any(a => a.Name == editAuthor.Name && a.Id != id))
+            {
+                return BadRequest("A author with the same name already exists.");
+            }
+
             //Map the properties from the AuthorDTO to the existing Author entity
-            _mapper.Map(authorDTO, author);
+            _mapper.Map(editAuthor, author);
 
             try
             {

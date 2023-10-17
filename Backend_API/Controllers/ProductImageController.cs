@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Backend_API.DTOs;
 using Backend_API.Entities;
+using Backend_API.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -65,19 +66,19 @@ namespace Backend_API.Controllers
         // CREATE NEW PRODUCTIMAGE
         [HttpPost]
         [Route("create")]
-        public async Task<ActionResult<ProductImageDTO>> PostProductImage(ProductImageDTO productImageDTO)
+        public async Task<ActionResult<ProductImageDTO>> PostProductImage(ProductImageCreateModel productImageModel)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
+            var productImages = _context.ProductImages.ToList();
             //Check if productImage with the same url already exists
-            if (_context.ProductImages.Any(p => p.Url == productImageDTO.Url))
+            if (productImages.Any(p => string.Equals(p.Url, productImageModel.Url, StringComparison.OrdinalIgnoreCase)))
             {
                 return BadRequest("A productImage with the same url already exists.");
             }
 
             //Map 
-            var productImage = _mapper.Map<ProductImage>(productImageDTO);
+            var productImage = _mapper.Map<ProductImage>(productImageModel);
 
             _context.ProductImages.Add(productImage);
             await _context.SaveChangesAsync();

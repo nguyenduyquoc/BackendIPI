@@ -71,9 +71,9 @@ namespace Backend_API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
+            var provinces = _context.Provinces.ToList();
             //Check if province with the same name already exists
-            if (_context.Provinces.Any(c => c.Name == provinceDTO.Name))
+            if (provinces.Any(c => c.Name == provinceDTO.Name))
             {
                 return BadRequest("A province with the same name already exists.");
             }
@@ -118,9 +118,9 @@ namespace Backend_API.Controllers
         [Route("update")]
         public async Task<IActionResult> PutProvince(int id, ProvinceDTO provinceDTO)
         {
-            if (id != provinceDTO.Id)
+            if (ModelState.IsValid)
             {
-                return BadRequest("The id in the URL does not match the id in the request body.");
+                return BadRequest();
             }
 
             //Check if the province with the given id exists in the database
@@ -128,6 +128,12 @@ namespace Backend_API.Controllers
             if (province == null)
             {
                 return NotFound();
+            }
+
+            // Check for duplicate province name (ignore the current province)
+            if (_context.Provinces.Any(c => c.Name == provinceDTO.Name && c.Id != id))
+            {
+                return BadRequest("A province with the same name already exists.");
             }
 
             //Map the properties from the ProvinceDTO to the existing Province entity

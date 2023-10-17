@@ -12,6 +12,8 @@ namespace Backend_API.DTOs
 
         public int? ParentId { get; set; }
 
+        public string? ParentName { get; set; }
+
         public DateTime CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
@@ -19,8 +21,6 @@ namespace Backend_API.DTOs
         public DateTime? DeletedAt { get; set; }
 
         public List<CategoryDTO>? InverseParent { get; set; }
-
-        public string? ParentName { get; set; }
 
         public List<ProductDTO>? Products { get; set; }
     }

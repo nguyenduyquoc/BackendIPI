@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Backend_API.DTOs;
 using Backend_API.Entities;
+using Backend_API.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -64,19 +65,19 @@ namespace Backend_API.Controllers
         // CREATE NEW PUBLISHER
         [HttpPost]
         [Route("create")]
-        public async Task<ActionResult<PublisherDTO>> PostPublisher(PublisherDTO publisherDTO)
+        public async Task<ActionResult<PublisherDTO>> PostPublisher(PublisherCreateModel publisherData)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
+            var publishers = _context.Publishers.ToList();
             //Check if publisher with the same name already exists
-            if (_context.Publishers.Any(c => c.Name == publisherDTO.Name))
+            if (publishers.Any(c => string.Equals(c.Name , publisherData.Name, StringComparison.OrdinalIgnoreCase)))
             {
                 return BadRequest("A publisher with the same name already exists.");
             }
 
             //Map 
-            var publisher = _mapper.Map<Entities.Publisher>(publisherDTO);
+            var publisher = _mapper.Map<Entities.Publisher>(publisherData);
 
             _context.Publishers.Add(publisher);
             await _context.SaveChangesAsync();
@@ -112,22 +113,28 @@ namespace Backend_API.Controllers
         // UPDATE 
         [HttpPut]
         [Route("update")]
-        public async Task<IActionResult> PutPublisher(int id, PublisherDTO publisherDTO)
+        public async Task<IActionResult> PutPublisher(int id, PublisherEditModel publisherData)
         {
-            if (id != publisherDTO.Id)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("The id in the URL does not match the id in the request body.");
+                return BadRequest(ModelState);
             }
 
-            //Check if the district with the given id exists in the database
+            //Check if the publisher with the given id exists in the database
             var publisher = await _context.Publishers.FindAsync(id);
             if (publisher == null)
             {
                 return NotFound();
             }
 
+            // Check for duplicate category name (ignore the current category)
+            if (_context.Publishers.Any(c => c.Name == publisherData.Name && c.Id != id))
+            {
+                return BadRequest("A publisher with the same name already exists.");
+            }
+
             //Map the properties from the PublisherDTO to the existing Publisher entity
-            _mapper.Map(publisherDTO, publisher);
+            _mapper.Map(publisherData, publisher);
 
             try
             {

@@ -1,14 +1,9 @@
-﻿using Backend_API.Entities;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Backend_API.DTOs
+namespace Backend_API.ViewModels
 {
-    public class OrderDTO
+    public class OrderCreateModel
     {
-        public int? Id { get; set; }
-
-        public string Code { get; set; } = null!;
-
-        public int Status { get; set; }
 
         public string Name { get; set; } = null!;
 
@@ -36,23 +31,21 @@ namespace Backend_API.DTOs
 
         public string? Note { get; set; }
 
+        [Required(ErrorMessage = "Payment method is required.")]
+        [RegularExpression("^(PAYPAL|VNPAY|COD)$", ErrorMessage = "Invalid payment method.")]
         public string PaymentMethod { get; set; } = null!;
-
-        public string? CancelReason { get; set; }
 
         public int? UserId { get; set; }
 
-        public DateTime CreatedAt { get; set; }
+        public virtual ICollection<OrderProductCreateModel> OrderProducts { get; set; } = new List<OrderProductCreateModel>();
+    }
 
-        public DateTime? UpdatedAt { get; set; }
+    public class OrderProductCreateModel
+    {
+        public int ProductId { get; set; }
 
-        public List<OrderProduct>? OrderProducts { get; set; }
-        /*
-        public virtual ReturnRequestDTO? ReturnRequest { get; set; }
+        public int Quantity { get; set; }
 
-        public List<ReviewDTO>? Reviews { get; set; }
-
-        public virtual UserDTO? User { get; set; }
-        */
+        public decimal Price { get; set; }
     }
 }

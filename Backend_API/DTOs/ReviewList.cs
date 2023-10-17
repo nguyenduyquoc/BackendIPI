@@ -1,8 +1,8 @@
 ﻿namespace Backend_API.DTOs
 {
-    public class ListProductDTO
+    public class ReviewList
     {
-        public List<ProductDTO>? Products { get; set; }
+        public List<ReviewDTO>? Reviews { get; set; }
 
         public int? TotalPages { get; set; }
 
