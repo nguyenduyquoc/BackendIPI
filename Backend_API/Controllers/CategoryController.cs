@@ -2,6 +2,7 @@
 using Backend_API.DTOs;
 using Backend_API.Entities;
 using Backend_API.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,8 @@ namespace Backend_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "MANAGER, STAFF")]
+
     public class CategoryController : ControllerBase
     {
         private readonly BookstoreContext _context;
@@ -25,6 +28,7 @@ namespace Backend_API.Controllers
         // GET LIST OF CATEGORY THAT HAVE NOT BEEN DELETED
         [HttpGet]
         [Route("get_categories_1")]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<CategoryDTO>>> Index1(int? limit)
         {
             var query = _context.Categories
@@ -130,6 +134,7 @@ namespace Backend_API.Controllers
         // CREAT NEW A CATEGORY
         [HttpPost]
         [Route("create")]
+        [Authorize(Policy = "SuperAdmin")]
         public async Task<ActionResult<CategoryDTO>> Create(CategoryCreateModel data)
         {
             if (ModelState.IsValid)

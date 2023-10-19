@@ -27,5 +27,7 @@ namespace Backend_API.DTOs
         public List<OrderDTO>? Orders { get; set; }
 
         public List<UserAddressDTO>? UserAddresses { get; set; }
+
+        public List<Product>? Products { get; set; }
     }
 }

@@ -12,11 +12,12 @@ namespace Backend_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "MANAGER, STAFF")]
     public class ProductController : ControllerBase
     {
         private readonly BookstoreContext _context;
         private readonly IMapper _mapper;
-
+        
         public ProductController(BookstoreContext context, IMapper mapper)
         {
             _context = context;
@@ -26,6 +27,7 @@ namespace Backend_API.Controllers
         // GET LIST OF PRODUCT THAT HAVE NOT BEEN DELETED
         [HttpPost]
         [Route("get_all_products")]
+        [AllowAnonymous]
         public async Task<ActionResult<ProductListDTO>> GetProducts(
             [FromBody] ProductFiterRequest filterRequest
         )
@@ -182,6 +184,7 @@ namespace Backend_API.Controllers
         // GET BY ID
         [HttpGet]
         [Route("get_by_id")]
+        [AllowAnonymous]
         public async Task<ActionResult<ProductDTO>> GetProduct(int id)
         {
             if (_context.Products == null)
@@ -210,6 +213,7 @@ namespace Backend_API.Controllers
         // FIND BY SLUG
         [HttpGet]
         [Route("get_by_slug")]
+        [AllowAnonymous]
         public async Task<ActionResult<ProductDTO>> GetProductBySlug(string slug)
         {
             var product = await _context.Products

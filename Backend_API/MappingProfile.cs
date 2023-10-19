@@ -54,6 +54,7 @@ namespace Backend_API
 
             //OrderProduct
             CreateMap<OrderProduct, OrderProductDTO>().ReverseMap();
+            CreateMap<OrderProductCreateModel, OrderProduct>();
 
             // Product
             CreateMap<Product, ProductDTO>()
@@ -97,13 +98,19 @@ namespace Backend_API
             // ReturnRequest
             CreateMap<ReturnRequest, ReturnRequestDTO>().ReverseMap();
 
+            // Return Request Image
+            CreateMap<ReturnRequestImage, ReturnRequestImageDTO>();
+
             // Review
             CreateMap<Review, ReviewDTO>().ReverseMap();
             CreateMap<ReviewCreateModel, Review>();
             CreateMap<ReviewEditModel, Review>();
 
             // Admin
-            CreateMap<Admin, AdminDTO>().ReverseMap();
+            CreateMap<Admin, AdminDTO>()
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role != null ? src.Role.Name : null));
+            CreateMap<AdminDTO, Admin>();
+
 
             // Tag
             CreateMap<Tag, TagDTO>().ReverseMap();
@@ -125,6 +132,13 @@ namespace Backend_API
             CreateMap<UserAddressCreateModel, UserAddress>();
             CreateMap<UserAddressEditModel, UserAddress>();
 
+            // Admin
+            /*CreateMap<Admin, AdminDTO>()
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
+                .ForMember(dest => dest.MenuItems, opt => opt.MapFrom(src => src.Role.MenuItems))
+                .ForMember(dest => dest.Permissions, opt => opt.MapFrom(src => src.Role.Permissions));*/
+            // ROLE
+            CreateMap<Role, RoleDTO>().ReverseMap();
         }
 
 
