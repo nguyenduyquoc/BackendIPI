@@ -212,7 +212,7 @@ namespace Backend_API.Controllers
 
         // FIND BY SLUG
         [HttpGet]
-        [Route("get_by_slug")]
+        [Route("get_by_slug/{slug}")]
         [AllowAnonymous]
         public async Task<ActionResult<ProductDTO>> GetProductBySlug(string slug)
         {
@@ -397,7 +397,7 @@ namespace Backend_API.Controllers
         }
 
         // LAY TAT CA CAC NAM SAN XUAT BAN DE LOC
-        [HttpGet("publish-years")]
+        [HttpGet("publish_years")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllPublishYears()
         {

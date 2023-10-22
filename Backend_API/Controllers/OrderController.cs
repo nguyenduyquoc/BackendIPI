@@ -108,6 +108,7 @@ namespace Backend_API.Controllers
             return orderDTO;
         }
 
+
         // UPDATE
         /*[HttpPut("{id}")]
         public async Task<IActionResult> PutOrder(int id, Order order)
@@ -165,7 +166,7 @@ namespace Backend_API.Controllers
             }
         }
 
-        [HttpPatch("confirm-payment/{code}")]
+        [HttpPatch("confirm_payment/{code}")]
         public async Task<IActionResult> ConfirmOrderPayment(string code)
         {
             try
@@ -225,7 +226,7 @@ namespace Backend_API.Controllers
         }
 
         // POST: api/Order
-        [HttpPost]
+        [HttpPost("post")]
         public async Task<ActionResult<Order>> PostOrder(OrderCreateModel model)
         {
             if (!ModelState.IsValid)

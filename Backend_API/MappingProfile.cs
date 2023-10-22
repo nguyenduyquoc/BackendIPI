@@ -59,6 +59,7 @@ namespace Backend_API
             // Product
             CreateMap<Product, ProductDTO>()
                 .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.Author != null ? src.Author.Name : null))
+                .ForMember(dest => dest.AuthorAvatar, opt => opt.MapFrom(src => src.Author != null ? src.Author.Avatar : null))
                 .ForMember(dest => dest.PublisherName, opt => opt.MapFrom(src => src.Publisher != null ? src.Publisher.Name : null))
                 .ForMember(dest => dest.Rating, opt =>
                 {

@@ -84,7 +84,7 @@ namespace Backend_API.Controllers
 
         // FIND BY CODE
         [HttpGet]
-        [Route("get_by_code")]
+        [Route("get_by_code/{code}")]
         public async Task<ActionResult<CouponDTO>> GetCouponByCode(string code)
         {
             var coupon = await _context.Coupons.SingleOrDefaultAsync(c => c.Code == code);

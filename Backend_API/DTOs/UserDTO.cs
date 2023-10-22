@@ -28,6 +28,6 @@ namespace Backend_API.DTOs
 
         public List<UserAddressDTO>? UserAddresses { get; set; }
 
-        public List<Product>? Products { get; set; }
+        public List<ProductDTO>? Products { get; set; }
     }
 }
