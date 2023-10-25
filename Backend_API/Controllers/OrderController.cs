@@ -109,35 +109,6 @@ namespace Backend_API.Controllers
         }
 
 
-        // UPDATE
-        /*[HttpPut("{id}")]
-        public async Task<IActionResult> PutOrder(int id, Order order)
-        {
-            if (id != order.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(order).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OrderExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }*/
 
         [HttpPatch("changeorderstatus/{code}")]
         public async Task<IActionResult> ChangeOrderStatus(string code, [FromBody] int status)
@@ -263,6 +234,28 @@ namespace Backend_API.Controllers
             else if (model.PaymentMethod == "COD")
             {
                 order.Status = 1; // CONFIRMED
+                foreach (var orderProduct in order.OrderProducts)
+                {
+                    var product = await _context.Products.FindAsync(orderProduct.ProductId);
+                    if (product != null)
+                    {
+                        // Reduce the product quantity based on the OrderProduct's quantity
+                        product.Quantity -= orderProduct.Quantity;
+                        _context.Entry(product).State = EntityState.Modified;
+                    }
+                }
+
+                // Reduce the quantity of coupon if coupon is applied
+                if (!string.IsNullOrEmpty(order.CouponCode))
+                {
+                    var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Code == order.CouponCode);
+                    if (coupon != null)
+                    {
+                        coupon.Quantity -= 1;
+                        _context.Entry(coupon).State = EntityState.Modified;
+                    }
+                }
+
             }
             else
             {
