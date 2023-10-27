@@ -162,28 +162,7 @@ namespace Backend_API.Controllers
                 order.Status = 1;
                 order.UpdatedAt = DateTime.Now;
 
-                // Reduce the quantity of each product in the OrderProduct array
-                foreach (var orderProduct in order.OrderProducts)
-                {
-                    var product = await _context.Products.FindAsync(orderProduct.ProductId);
-                    if (product != null)
-                    {
-                        // Reduce the product quantity based on the OrderProduct's quantity
-                        product.Quantity -= orderProduct.Quantity;
-                        _context.Entry(product).State = EntityState.Modified;
-                    }
-                }
-
-                // Reduce the quantity of coupon if coupon is applied
-                if (!string.IsNullOrEmpty(order.CouponCode))
-                {
-                    var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Code == order.CouponCode);
-                    if (coupon != null)
-                    {
-                        coupon.Quantity -= 1;
-                        _context.Entry(coupon).State = EntityState.Modified;
-                    }
-                }
+                
 
                 _context.Entry(order).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
