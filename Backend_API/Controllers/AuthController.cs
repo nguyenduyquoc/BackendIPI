@@ -243,5 +243,46 @@ namespace Backend_API.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        [HttpPost]
+        [Route("reset_password")]
+        [Authorize] // Requires authentication
+        public async Task<IActionResult> ResetPassword(UserResetPasswordModel resetModel)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var userId = int.Parse(userIdClaim.Value);
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
+
+                // Verify the old password
+                if (!BCrypt.Net.BCrypt.Verify(resetModel.OldPassword, user.Password))
+                {
+                    return Unauthorized("Old password is incorrect");
+                }
+
+                // Hash and salt the new password
+                var salt = BCrypt.Net.BCrypt.GenerateSalt(6);
+                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(resetModel.NewPassword, salt);
+
+                // Update the user's password
+                user.Password = hashedPassword;
+
+                // Save the changes to the database
+                await _context.SaveChangesAsync();
+
+                return Ok("Password reset successful");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while resetting the password: {ex.Message}");
+            }
+        }
     }
 }

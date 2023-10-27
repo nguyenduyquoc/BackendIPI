@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Backend_API.DTOs;
 using Backend_API.Entities;
+using Backend_API.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ namespace Backend_API.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("liked-products")]
+        [HttpGet("liked_products")]
         [Authorize]
         public async Task<IActionResult> GetLikedProducts()
         {
@@ -56,7 +57,7 @@ namespace Backend_API.Controllers
             }
         }
 
-        [HttpGet("like-product/{productId}")]
+        [HttpGet("like_product/{productId}")]
         [Authorize]
         public async Task<IActionResult> LikeProduct(int productId)
         {
@@ -130,6 +131,41 @@ namespace Backend_API.Controllers
             var queryDTOs = _mapper.Map<List<UserDTO>>(query);
 
             return Ok(queryDTOs);
+        }
+
+        [HttpPut("update_profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUserProdile(UserProfileEdit model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var userId = int.Parse(userIdClaim.Value);
+
+                // Query the database to fetch the user
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (user == null)
+                {
+                    return NotFound("User not found");
+                }
+       
+                _mapper.Map(model, user);
+
+                _context.Entry(user).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                return Ok("User profile updated successfully");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
         }
     }
 }

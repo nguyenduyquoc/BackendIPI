@@ -120,6 +120,7 @@ namespace Backend_API
 
             // User
             CreateMap<User, UserDTO>().ReverseMap();
+            CreateMap<UserProfileEdit, User>();
 
             // UserAddress
             CreateMap<UserAddress, UserAddressDTO>().ReverseMap();
