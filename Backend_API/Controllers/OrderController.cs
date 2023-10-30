@@ -162,7 +162,28 @@ namespace Backend_API.Controllers
                 order.Status = 1;
                 order.UpdatedAt = DateTime.Now;
 
-                
+                foreach (var orderProduct in order.OrderProducts)
+                {
+                    var product = await _context.Products.FindAsync(orderProduct.ProductId);
+                    if (product != null)
+                    {
+                        // Reduce the product quantity based on the OrderProduct's quantity
+                        product.Quantity -= orderProduct.Quantity;
+                        _context.Entry(product).State = EntityState.Modified;
+                    }
+                }
+
+                // Reduce the quantity of coupon if coupon is applied
+                if (!string.IsNullOrEmpty(order.CouponCode))
+                {
+                    var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Code == order.CouponCode);
+                    if (coupon != null)
+                    {
+                        coupon.Quantity -= 1;
+                        _context.Entry(coupon).State = EntityState.Modified;
+                    }
+                }
+
 
                 _context.Entry(order).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
@@ -281,6 +302,81 @@ namespace Backend_API.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpPost("cancel_order")]
+        public async Task<IActionResult> CancelOrder(CancelOrderModel model)
+        {
+            try
+            {
+                var order = await _context.Orders.FirstOrDefaultAsync(o => o.Code == model.Code);
+
+                if (order == null || order.Email != model.Email)
+                {
+                    return NotFound();
+                }
+
+                if (order.Status < 3) // Check if the order is cancelable
+                {
+                    // Update the order status to canceled (6)
+                    order.Status = 6;
+                    order.CancelReason = model.CancelReason;
+                    order.UpdatedAt = DateTime.Now;
+
+                    _context.Entry(order).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+
+                    return Ok();
+                }
+
+                return BadRequest("This order is not cancelable.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while canceling the order: {ex.Message}");
+            }
+        }
+
+        [HttpPost("confirm_received_order")]
+        public async Task<IActionResult> ConfirmReceivedOrder(OrderReceivedConfirmModel model)
+        {
+            try
+            {
+                var order = await _context.Orders.FirstOrDefaultAsync(o => o.Code == model.Code);
+
+                if (order == null || order.Email != model.Email)
+                {
+                    return NotFound();
+                }
+
+                if (order.Status == 4) // Check if the order is delivered
+                {
+                    // Update the order status to completed (5)
+                    order.Status = 5;
+                    order.UpdatedAt = DateTime.Now;
+                    foreach (var orderProduct in order.OrderProducts)
+                    {
+                        var product = await _context.Products.FindAsync(orderProduct.ProductId);
+                        if (product != null)
+                        {
+                            // Reduce the product quantity based on the OrderProduct's quantity
+                            product.Quantity += orderProduct.Quantity;
+                          
+                        }
+                    }
+
+                    _context.Entry(order).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+
+                    return Ok();
+                }
+
+                return BadRequest("This order can not be confirmed.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while canceling the order: {ex.Message}");
+            }
         }
 
         private bool OrderExists(int id)

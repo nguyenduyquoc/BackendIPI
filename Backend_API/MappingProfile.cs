@@ -120,7 +120,8 @@ namespace Backend_API
 
             // User
             CreateMap<User, UserDTO>().ReverseMap();
-            CreateMap<UserProfileEdit, User>();
+            CreateMap<UserProfileEdit, User>()
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.Now)); ;
 
             // UserAddress
             CreateMap<UserAddress, UserAddressDTO>().ReverseMap();
