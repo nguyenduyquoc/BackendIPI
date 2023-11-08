@@ -15,11 +15,13 @@ public partial class ReturnRequest
 
     public decimal RefundAmount { get; set; }
 
+    public string? Response { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
     public virtual Order Order { get; set; } = null!;
 
-    public virtual ReturnRequestImage? ReturnRequestImage { get; set; }
+    public virtual ICollection<ReturnRequestImage> ReturnRequestImages { get; set; } = new List<ReturnRequestImage>();
 }

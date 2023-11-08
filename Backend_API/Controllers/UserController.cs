@@ -49,7 +49,7 @@ namespace Backend_API.Controllers
                 // You may want to map the likedProducts to DTOs if necessary
                 var productDTOs = _mapper.Map<List<ProductDTO>>(likedProducts);
 
-                return Ok(likedProducts);
+                return Ok(productDTOs);
             }
             catch (Exception ex)
             {
@@ -77,7 +77,7 @@ namespace Backend_API.Controllers
                     return NotFound("User not found");
                 }
 
-                // Check if the product exists in the user's liked products
+                // Check if the product exists in the products
                 var productToLike = await _context.Products.FindAsync(productId);
 
                 if (productToLike == null)
@@ -85,6 +85,7 @@ namespace Backend_API.Controllers
                     return NotFound("Product not found");
                 }
 
+                // Check if the product exists in the user's liked products
                 var likedProduct = user.Products.FirstOrDefault(p => p.Id == productId);
 
                 if (likedProduct == null)
@@ -295,7 +296,7 @@ namespace Backend_API.Controllers
                     .Include(r => r.Order)
                         .ThenInclude(o => o.OrderProducts)
                             .ThenInclude(op => op.Product)
-                    .Include(r => r.ReturnRequestImage)
+                    .Include(r => r.ReturnRequestImages)
                     .FirstOrDefaultAsync(r => r.Id == id);
 
                 if (returnRequest == null)
@@ -317,6 +318,118 @@ namespace Backend_API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpPost("user_address")]
+        [Authorize]
+        public async Task<IActionResult> PostUserAddress(UserAddressCreateModel model)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var userId = int.Parse(userIdClaim.Value);
+
+                // Create a new UserAddress entity
+                var userAddress = new UserAddress
+                {
+                    UserId = userId,
+                    Address = model.Address,
+                    DistrictId = model.DistrictId
+                };
+
+                // Add the new user address to the database
+                _context.UserAddresses.Add(userAddress);
+                await _context.SaveChangesAsync();
+
+                // You may want to map the DTO if necessary
+                var userAddressDTO = _mapper.Map<UserAddressDTO>(userAddress);
+
+                return Ok(userAddressDTO);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        [HttpPut("user_address/{id}")]
+        [Authorize]
+        public async Task<IActionResult> PutUserAddress(int id, UserAddressEditModel model)
+        {
+            try
+            {
+                // Get the currently authenticated user's ID
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (userId == null)
+                {
+                    // Unable to retrieve the user's ID from the claims
+                    return BadRequest("Unable to identify the user.");
+                }
+
+                // Find the user address by ID and user ID
+                var userAddress = await _context.UserAddresses
+                    .Where(ua => ua.Id == id && ua.UserId == int.Parse(userId))
+                    .FirstOrDefaultAsync();
+
+                if (userAddress == null)
+                {
+                    // User address not found or doesn't belong to the user
+                    return NotFound("User address not found or does not belong to the user.");
+                }
+
+                // Update the user address data
+                userAddress.Address = model.Address;
+                userAddress.DistrictId = model.DistrictId;
+
+                _context.Entry(userAddress).State = EntityState.Modified;
+
+                await _context.SaveChangesAsync();
+
+                // Return the updated user address
+                return Ok(userAddress);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while updating the user address: {ex.Message}");
+            }
+        }
+
+        [HttpDelete("user_address/{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteUserAddress(int id)
+        {
+            try
+            {
+                // Get the currently authenticated user's ID
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (userId == null)
+                {
+                    // Unable to retrieve the user's ID from the claims
+                    return BadRequest("Unable to identify the user.");
+                }
+
+                // Find the user address by ID and user ID
+                var userAddress = await _context.UserAddresses
+                    .Where(ua => ua.Id == id && ua.UserId == int.Parse(userId))
+                    .FirstOrDefaultAsync();
+
+                if (userAddress == null)
+                {
+                    // User address not found or doesn't belong to the user
+                    return NotFound("User address not found or does not belong to the user.");
+                }
+
+                _context.UserAddresses.Remove(userAddress);
+                await _context.SaveChangesAsync();
+
+                return NoContent(); // 204 No Content response for a successful deletion
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while deleting the user address: {ex.Message}");
             }
         }
     }

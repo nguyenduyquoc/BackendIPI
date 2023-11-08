@@ -27,6 +27,7 @@ namespace Backend_API.Controllers
         {
             var districts = await _context.Districts
                 .Include(d => d.Province)
+                .Include(d => d.DeliveryServices)
                 .ToListAsync();
 
             if (districts == null || districts.Count == 0)
@@ -50,6 +51,7 @@ namespace Backend_API.Controllers
             }
             var district = await _context.Districts
                 .Include(d => d.Province)
+                .Include(d => d.DeliveryServices)
                 .FirstOrDefaultAsync(d => d.Id == id);
 
             if (district == null)

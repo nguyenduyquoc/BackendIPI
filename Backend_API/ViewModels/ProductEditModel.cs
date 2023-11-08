@@ -14,6 +14,8 @@
 
         public decimal Price { get; set; }
 
+        public decimal VatRate { get; set; }
+
         public decimal? DiscountAmount { get; set; }
 
         public int Quantity { get; set; }
@@ -23,5 +25,13 @@
         public int PublisherId { get; set; }
 
         public int PublishYear { get; set; }
+
+        public virtual ICollection<ProductImageCreateModel> NewProductImages { get; set; } = new List<ProductImageCreateModel>();
+
+        public virtual ICollection<int> RemoveProductImageIds { get; set; } = new List<int>();
+
+        public virtual ICollection<int> CategoryIds { get; set; } = new List<int>();
+
+        public virtual ICollection<int> TagIds { get; set; } = new List<int>();
     }
 }

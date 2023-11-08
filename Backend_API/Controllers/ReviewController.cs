@@ -27,13 +27,10 @@ namespace Backend_API.Controllers
         [Route("get_reviews")]
         public async Task<ActionResult<ReviewList>> GetReviews(int? page, int? pageSize, bool? orderByDesc, bool? editable)
         {
-            IQueryable<Review> query = _context.Reviews;
-
-            // Apply filtering by status Editable if the 'status Editable' parameter is provided
-            if (editable.HasValue)
-            {
-                query = query.Where(r => r.Editable == editable);
-            } 
+            IQueryable<Review> query = _context.Reviews
+                .Include(r => r.OrderProduct)
+                    .ThenInclude(r => r.Order)
+                        .ThenInclude(r => r.User);
 
             // Calculate the total number of items matching the criteria
             int totalItems = await query.CountAsync();
@@ -90,7 +87,10 @@ namespace Backend_API.Controllers
         public async Task<ActionResult<ReviewDTO>> Get(int id)
         {
             var review = await _context.Reviews
-                .FirstOrDefaultAsync(c => c.Order.UserId == id);
+                .Include(r => r.OrderProduct)
+                    .ThenInclude(r => r.Order)
+                        .ThenInclude(r => r.User)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
 
             if (review == null)
@@ -106,14 +106,49 @@ namespace Backend_API.Controllers
 
 
 
-        // CREAT NEW A REVIEW (da review roi thi k review nua)
-        
+        // CREAT NEW A REVIEW
+        [HttpPost]
+        [Route("create")]
+        public async Task<ActionResult<ReviewDTO>> PostReview(ReviewCreateModel reviewData)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            //Map ReviewCreateModel to Review
+            var review = _mapper.Map<Review>(reviewData);
+
+            // Set the CreatedAt property to the current date and time
+            review.CreatedAt = DateTime.UtcNow;
+
+            _context.Reviews.Add(review);
+            await _context.SaveChangesAsync();
+
+            // Map the created review back to ReviewDTO and return it in the response
+            var createdReviewDTO = _mapper.Map<ReviewDTO>(review);
+            return CreatedAtAction(nameof(Get), new { id = review.Id }, createdReviewDTO);
+        }
 
         // DELETE 
+        [HttpDelete]
+        [Route("delete")]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            if (_context.Reviews == null)
+            {
+                return NotFound();
+            }
+            var review = await _context.Reviews.FindAsync(id);
+            if (review == null)
+            {
+                return NotFound();
+            }
 
-        // UPDATE (chi dc sua 1 lan)
-        
+            _context.Reviews.Remove(review);
+            await _context.SaveChangesAsync();
 
-       
+            return NoContent();
+        }
+
+
     }
 }

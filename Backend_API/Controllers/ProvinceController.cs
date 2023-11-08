@@ -28,6 +28,7 @@ namespace Backend_API.Controllers
             var provinces = await _context.Provinces
                 .Include(c => c.Country)
                 .Include(c => c.Districts)
+                    .ThenInclude(d => d.DeliveryServices)
                 .ToListAsync();
 
             if (provinces == null || provinces.Count == 0)
@@ -52,6 +53,7 @@ namespace Backend_API.Controllers
             var province = await _context.Provinces
                 .Include(c => c.Country)
                 .Include(c => c.Districts)
+                    .ThenInclude(d => d.DeliveryServices)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (province == null)

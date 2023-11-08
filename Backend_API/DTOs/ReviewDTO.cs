@@ -4,22 +4,24 @@ namespace Backend_API.DTOs
 {
     public class ReviewDTO
     {
-        public int OrderId { get; set; }
+        public int Id { get; set; }
 
         public int ProductId { get; set; }
+
+        public int OrderId { get; set; }
+
+        public string? Fname { get; set; }
+
+        public string? Lname { get; set; }
+
+        public string? Avatar { get; set; }
+
+        public string? Email { get; set; }
 
         public decimal Rating { get; set; }
 
         public string? Comment { get; set; }
 
-        public bool? Editable { get; set; }
-
         public DateTime CreatedAt { get; set; }
-
-        public DateTime? UpdatedAt { get; set; }
-
-        /*public virtual OrderDTO Order { get; set; } = null!;
-
-        public virtual ProductDTO Product { get; set; } = null!;*/
     }
 }

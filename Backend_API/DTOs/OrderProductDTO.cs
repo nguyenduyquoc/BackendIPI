@@ -4,7 +4,7 @@ namespace Backend_API.DTOs
 {
     public class OrderProductDTO
     {
-        public int OrderId { get; set; }
+        public int Id { get; set; }
 
         public int ProductId { get; set; }
 
@@ -18,6 +18,10 @@ namespace Backend_API.DTOs
 
         public decimal Price { get; set; }
 
+        public decimal VatRate { get; set; }
+
         public int? ReturnQuantity { get; set; }
+
+        public ReviewDTO? Review { get; set; }
     }
 }

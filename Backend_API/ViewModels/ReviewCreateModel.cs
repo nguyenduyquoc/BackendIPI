@@ -2,9 +2,7 @@
 {
     public class ReviewCreateModel
     {
-        public int OrderId { get; set; }
-
-        public int ProductId { get; set; }
+        public int OrderProductId { get; set; }
 
         public decimal Rating { get; set; }
 

@@ -27,7 +27,13 @@ public partial class Order
 
     public decimal Subtotal { get; set; }
 
+    public decimal Vat { get; set; }
+
     public decimal DeliveryFee { get; set; }
+
+    public string DeliveryService { get; set; } = null!;
+
+    public DateTime? DeliveryEstimate { get; set; }
 
     public string? CouponCode { get; set; }
 
@@ -50,8 +56,6 @@ public partial class Order
     public virtual ICollection<OrderProduct> OrderProducts { get; set; } = new List<OrderProduct>();
 
     public virtual ReturnRequest? ReturnRequest { get; set; }
-
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public virtual User? User { get; set; }
 }

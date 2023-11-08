@@ -21,6 +21,8 @@ public partial class Product
 
     public decimal Price { get; set; }
 
+    public decimal VatRate { get; set; }
+
     public decimal? DiscountAmount { get; set; }
 
     public int Quantity { get; set; }
@@ -44,8 +46,6 @@ public partial class Product
     public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 
     public virtual Publisher Publisher { get; set; } = null!;
-
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public virtual ICollection<Category> Categories { get; set; } = new List<Category>();
 

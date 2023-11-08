@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Backend_API.DTOs;
 using Backend_API.Entities;
+using Backend_API.Services;
 using Backend_API.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,17 +15,30 @@ namespace Backend_API.Controllers
     {
         private readonly BookstoreContext _context;
         private readonly IMapper _mapper;
+        private readonly IEmailSender _emailSender;
+        private readonly EmailContentService _emailContentService;
 
-        public OrderController(BookstoreContext context, IMapper mapper)
+        public OrderController(BookstoreContext context, IMapper mapper, IEmailSender emailSender,
+            EmailContentService emailContentService)
         {
             _context = context;
             _mapper = mapper;
+            _emailSender = emailSender;
+            _emailContentService = emailContentService;
         }
 
         // GET LIST ORDER
         [HttpGet]
         [Route("get_orders")]
-        public async Task<ActionResult<OrderList>> GetOrders(int? page, int? pageSize, bool? orderByDesc, string? search, int? status)
+        public async Task<ActionResult<OrderList>> GetOrders(
+            int? page,
+            int? pageSize, 
+            bool? orderByDesc, 
+            string? search, 
+            int? status,
+            DateTime? fromDate,
+            DateTime? toDate
+            )
         {
             IQueryable<Order> query = _context.Orders;
 
@@ -37,7 +51,26 @@ namespace Backend_API.Controllers
             // Apply searching if the 'search' parameter is provided
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(o => o.Name.Contains(search));
+                query = query.Where(o =>
+                    o.Code.Contains(search) ||
+                    o.Name.Contains(search) ||
+                    o.Phone.Contains(search) ||
+                    o.Email.Contains(search)
+                    );
+            }
+
+            // Apply filtering by CreateAt datetime
+            if (fromDate.HasValue)
+            {
+                query = query.Where(o => o.CreatedAt >= fromDate);
+            }
+
+            if (toDate.HasValue)
+            {
+                // When using DateTime for filtering, it's common to include the end of the day.
+                // So, toDate is often set to the end of the day (23:59:59).
+                DateTime toDateEndOfDay = toDate.Value.Date.AddDays(1).AddSeconds(-1);
+                query = query.Where(o => o.CreatedAt <= toDateEndOfDay);
             }
 
             // Calculate the total number of items matching the criteria
@@ -86,6 +119,45 @@ namespace Backend_API.Controllers
             return response;
         }
 
+        [HttpGet("order_count")]
+        public async Task<ActionResult<OrderCountResponse>> GetOrderCount(DateTime? fromDate, DateTime? toDate)
+        {
+            IQueryable<Order> query = _context.Orders;
+
+            if (fromDate.HasValue)
+            {
+                query = query.Where(o => o.CreatedAt >= fromDate);
+            }
+
+            if (toDate.HasValue)
+            {
+                DateTime toDateEndOfDay = toDate.Value.Date.AddDays(1).AddSeconds(-1);
+                query = query.Where(o => o.CreatedAt <= toDateEndOfDay);
+            }
+
+            if (!fromDate.HasValue && !toDate.HasValue)
+            {
+                // If both fromDate and toDate are null, calculate for today
+                DateTime today = DateTime.Today;
+                query = query.Where(o => o.CreatedAt >= today);
+            }
+
+            int totalOrders = await query.CountAsync();
+            int confirmedOrders = await query.CountAsync(o => o.Status == 1);
+            int shippingOrders = await query.CountAsync(o => o.Status == 3);
+            int deliveredOrders = await query.CountAsync(o => o.Status == 4);
+
+            var response = new OrderCountResponse
+            {
+                TotalOrders = totalOrders,
+                ConfirmedOrders = confirmedOrders,
+                ShippingOrders = shippingOrders,
+                DeliveredOrders = deliveredOrders
+            };
+
+            return response;
+        }
+
         // GET BY CODE
         [HttpGet("{code}")]
         public async Task<ActionResult<OrderDTO>> GetOrder(string code)
@@ -97,6 +169,7 @@ namespace Backend_API.Controllers
             var order = await _context.Orders
                 .Include(o => o.OrderProducts)
                     .ThenInclude(op => op.Product)
+                .Include(o => o.ReturnRequest)
                 .FirstOrDefaultAsync(o => o.Code == code);
 
             if (order == null)
@@ -108,9 +181,39 @@ namespace Backend_API.Controllers
             return orderDTO;
         }
 
+        // theo doi don hang
+        [HttpGet("order_tracking")]
+        public async Task<ActionResult<OrderDTO>> GetOrderByCodeAndEmail(string code, string email)
+        {
+            if (_context.Orders == null)
+            {
+                return NotFound();
+            }
 
+            // Find the order by code
+            var order = await _context.Orders
+                .Include(o => o.OrderProducts)
+                    .ThenInclude(op => op.Product)
+                .Include(o => o.ReturnRequest)
+                .FirstOrDefaultAsync(o => o.Code == code);
 
-        [HttpPatch("changeorderstatus/{code}")]
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            // Check if the provided email matches the order's email
+            if (order.Email != email)
+            {
+                return NotFound();
+            }
+
+            var orderDTO = _mapper.Map<OrderDTO>(order);
+
+            return orderDTO;
+        }
+
+        [HttpPatch("change_order_status/{code}")]
         public async Task<IActionResult> ChangeOrderStatus(string code, [FromBody] int status)
         {
             try
@@ -187,6 +290,14 @@ namespace Backend_API.Controllers
 
                 _context.Entry(order).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
+
+                var orderDTO = _mapper.Map<OrderDTO>(order);
+                // Generate email content for the "Order Confirmed" email
+                string emailContent = _emailContentService.ConstructOrderConfirmedEmailContent(orderDTO);
+
+                // Send the email
+                var message = new Message(new string[] { "nguyenduyquoc129829042001@gmail.com" }, "Order Confirmed", emailContent);
+                await _emailSender.SendEmailAsync(message);
 
                 return Ok();
             }
@@ -281,6 +392,16 @@ namespace Backend_API.Controllers
             }
 
             var createdOrderDTO = _mapper.Map<OrderDTO>(createdOrder);
+
+            if (createdOrderDTO.PaymentMethod == "COD")
+            {
+                // Generate email content for the "Order Confirmed" email
+                string emailContent = _emailContentService.ConstructOrderConfirmedEmailContent(createdOrderDTO);
+
+                // Send the email with the populated template
+                var message = new Message(new string[] { "nguyenduyquoc129829042001@gmail.com" }, "Order Confirmed", emailContent);
+                await _emailSender.SendEmailAsync(message);
+            }
             return CreatedAtAction(nameof(GetOrder), new { code = order.Code }, createdOrderDTO);
         }
 
@@ -354,16 +475,6 @@ namespace Backend_API.Controllers
                     // Update the order status to completed (5)
                     order.Status = 5;
                     order.UpdatedAt = DateTime.Now;
-                    foreach (var orderProduct in order.OrderProducts)
-                    {
-                        var product = await _context.Products.FindAsync(orderProduct.ProductId);
-                        if (product != null)
-                        {
-                            // Reduce the product quantity based on the OrderProduct's quantity
-                            product.Quantity += orderProduct.Quantity;
-                          
-                        }
-                    }
 
                     _context.Entry(order).State = EntityState.Modified;
                     await _context.SaveChangesAsync();

@@ -2,9 +2,7 @@
 {
     public class ProductImageCreateModel
     {
-        public string? Url { get; set; }
-
-        public int ProductId { get; set; }
+        public string Url { get; set; }
 
     }
 }

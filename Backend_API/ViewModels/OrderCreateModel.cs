@@ -21,7 +21,13 @@ namespace Backend_API.ViewModels
 
         public decimal Subtotal { get; set; }
 
+        public decimal Vat { get; set; }
+
         public decimal DeliveryFee { get; set; }
+
+        public string DeliveryService { get; set; } = null!;
+
+        public DateTime? DeliveryEstimate { get; set; }
 
         public string? CouponCode { get; set; }
 

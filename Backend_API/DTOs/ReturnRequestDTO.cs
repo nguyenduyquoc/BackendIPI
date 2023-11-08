@@ -12,14 +12,16 @@
 
         public decimal RefundAmount { get; set; }
 
+        public string? Response { get; set; }
+
         public DateTime CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
 
         public virtual OrderDTO Order { get; set; } = null!;
 
-        public virtual ReturnRequestImageDTO? ReturnRequestImage { get; set; }
+        public virtual ICollection<ReturnRequestImageDTO> ReturnRequestImages { get; set; } = new List<ReturnRequestImageDTO>();
 
-        public virtual OrderProductDTO returnProducts { get; set; } = null!;
+        public virtual ICollection<OrderProductDTO> ReturnProducts { get; set; } = new List<OrderProductDTO>();
     }
 }

@@ -26,7 +26,13 @@ namespace Backend_API.DTOs
 
         public decimal Subtotal { get; set; }
 
+        public decimal Vat { get; set; }
+
         public decimal DeliveryFee { get; set; }
+
+        public string DeliveryService { get; set; } = null!;
+
+        public DateTime? DeliveryEstimate { get; set; }
 
         public string? CouponCode { get; set; }
 
@@ -46,13 +52,13 @@ namespace Backend_API.DTOs
 
         public DateTime? UpdatedAt { get; set; }
 
-        public List<OrderProduct>? OrderProducts { get; set; }
-        /*
-        public virtual ReturnRequestDTO? ReturnRequest { get; set; }
+        public virtual ICollection<OrderProductDTO> OrderProducts { get; set; } = new List<OrderProductDTO>();
 
-        public List<ReviewDTO>? Reviews { get; set; }
+        public int? ReturnRequestId { get; set; }
 
-        public virtual UserDTO? User { get; set; }
-        */
+        public int? ReturnRequestStatus { get; set; }
+
+        public string? paymentUrl { get; set; }
+
     }
 }

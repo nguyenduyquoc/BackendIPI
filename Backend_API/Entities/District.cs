@@ -9,11 +9,9 @@ public partial class District
 
     public string Name { get; set; } = null!;
 
-    public decimal? DeliveryFee { get; set; }
-
-    public string? DeliveryType { get; set; }
-
     public int ProvinceId { get; set; }
+
+    public virtual ICollection<DeliveryService> DeliveryServices { get; set; } = new List<DeliveryService>();
 
     public virtual Province Province { get; set; } = null!;
 

@@ -37,10 +37,12 @@ namespace Backend_API.Controllers
                 .Include(p => p.Publisher)
                 .Include(p => p.Categories)
                 .Include(p => p.ProductImages)
-                .Include(p => p.Reviews)
                 .Include(p => p.Tags)
                 .Include(p => p.OrderProducts)
                     .ThenInclude(op => op.Order)
+                        .ThenInclude(o => o.User)
+                .Include(p => p.OrderProducts)
+                    .ThenInclude(od => od.Review)
                 .Where(c => c.DeletedAt == null);
 
             // Apply filters
@@ -93,7 +95,9 @@ namespace Backend_API.Controllers
                     query = query.OrderByDescending(p => p.DiscountAmount ?? 0);
                     break;
                 case "highestrating":
-                    query = query.OrderByDescending(p => CalculateAverageRating(p.Reviews.ToList()));
+                    query = query.OrderByDescending(p => p.OrderProducts
+                    .Where(op => op.Review != null)
+                    .Average(op => op.Review.Rating));
                     break;
                 case "bestseller":
                     query = query.OrderByDescending(p => p.OrderProducts
@@ -167,7 +171,6 @@ namespace Backend_API.Controllers
                 .Include(p => p.Publisher)
                 .Include(p => p.Categories)
                 .Include(p => p.ProductImages)
-                .Include(p => p.Reviews)
                 .Include(p => p.Tags)
                 .ToListAsync();
 
@@ -179,6 +182,86 @@ namespace Backend_API.Controllers
             // Map entities to DTOs
             var deletedProductDTOs = _mapper.Map<List<ProductDTO>>(deletedProducts);
             return deletedProductDTOs;
+        }
+
+        [HttpGet("search")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ProductListDTO>> SearchProducts(int categoryId, string searchString, int? page, int? pageSize)
+        {
+            var query = _context.Products
+                .Include(p => p.Author)
+                .Include(p => p.Publisher)
+                .Include(p => p.Categories)
+                .Include(p => p.ProductImages)
+                .Include(p => p.Tags)
+                .Include(p => p.OrderProducts)
+                    .ThenInclude(op => op.Order)
+                        .ThenInclude(o => o.User)
+                .Include(p => p.OrderProducts)
+                    .ThenInclude(op => op.Review)
+                .Where(c => c.DeletedAt == null);
+
+            // Apply category filtering based on categoryId
+            if (categoryId != 0)
+            {
+                // Retrieve category and its sub-categories
+                var category = await _context.Categories
+                    .Include(c => c.InverseParent)
+                    .Where(c => c.Id == categoryId)
+                    .FirstOrDefaultAsync();
+
+                if (category != null)
+                {
+                    // Collect all category ids including sub-categories
+                    var categoryIds = category.InverseParent
+                        .Select(c => c.Id)
+                        .ToList();
+                    categoryIds.Add(category.Id);
+
+                    query = query.Where(p => p.Categories.Any(c => categoryIds.Contains(c.Id)));
+                }
+            }
+            // Apply search query
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                //searchString = searchString.ToLower(); // Convert to lowercase for case-insensitive search
+                query = query.Where(p => p.Name.Contains(searchString));
+            }
+
+            // Calculate the total number of items matching the criteria
+            int totalItems = await query.CountAsync();
+
+            // Initialize variables for totalPages and itemsPerPage
+            int? totalPages = null;
+            int itemsPerPage = 0;
+
+            // Apply pagination if the 'page' and 'pageSize' parameters are provided
+            if (page.HasValue && pageSize.HasValue)
+            {
+                int currentPage = page.Value;
+                itemsPerPage = pageSize.Value;
+                totalPages = (int)Math.Ceiling((double)totalItems / itemsPerPage);
+                query = query.Skip((currentPage - 1) * itemsPerPage).Take(itemsPerPage);
+            }
+
+            var products = await query.ToListAsync();
+
+            if (products == null || products.Count == 0)
+            {
+                return NotFound();
+            }
+
+            // Map entities to DTOs
+            var productDTOs = _mapper.Map<List<ProductDTO>>(products);
+
+            var response = new ProductListDTO
+            {
+                Products = productDTOs,
+                TotalPages = totalPages,
+                TotalItems = totalItems,
+            };
+
+            return response;
         }
 
         // GET BY ID
@@ -196,7 +279,11 @@ namespace Backend_API.Controllers
                 .Include(p => p.Publisher)
                 .Include(p => p.Categories)
                 .Include(p => p.ProductImages)
-                .Include(p => p.Reviews)
+                .Include(p => p.OrderProducts)
+                    .ThenInclude(op => op.Order)
+                        .ThenInclude(o => o.User)
+                .Include(p => p.OrderProducts)
+                    .ThenInclude(op => op.Review)
                 .Include(p => p.Tags)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -221,7 +308,11 @@ namespace Backend_API.Controllers
                 .Include(p => p.Publisher)
                 .Include(p => p.Categories)
                 .Include(p => p.ProductImages)
-                .Include(p => p.Reviews)
+                .Include(p => p.OrderProducts)
+                    .ThenInclude(op => op.Order)
+                        .ThenInclude(o => o.User)
+                .Include(p => p.OrderProducts)
+                    .ThenInclude(op => op.Review)
                 .Include(p => p.Tags)
                 .FirstOrDefaultAsync(c => c.Slug == slug);
 
@@ -242,6 +333,7 @@ namespace Backend_API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
             var products = _context.Products.ToList();
             //Check if product with the same name already exists
             if (products.Any(c => string.Equals(c.Name,  productData.Name, StringComparison.OrdinalIgnoreCase)))
@@ -251,6 +343,37 @@ namespace Backend_API.Controllers
 
             //Map ProductDTO to Product
             var product = _mapper.Map<Product>(productData);
+
+            //Manually set the associated categories based on their existing IDs
+            var categoryIds = productData.CategoryIds;
+            if(categoryIds.Any())
+            {
+                foreach (var categoryId in categoryIds)
+                {
+                    var category = await _context.Categories.FindAsync(categoryId);
+                    if (category != null)
+                    {
+                        // Add the product to the category
+                        category.Products.Add(product);
+                    }
+                }
+            }
+
+            //Manually set the associated tags based on their existing IDs
+            var tagIds = productData.TagIds;
+            if (tagIds.Any())
+            {
+                foreach (var tagId in tagIds)
+                {
+                    var tag = await _context.Tags.FindAsync(tagId);
+                    if (tag != null)
+                    {
+                        // Add the product to the category
+                        tag.Products.Add(product);
+                    }
+                }
+            }
+           
 
             // Set the CreatedAt property to the current date and time
             product.CreatedAt = DateTime.UtcNow;
@@ -277,12 +400,6 @@ namespace Backend_API.Controllers
             if (product == null)
             {
                 return NotFound();
-            }
-
-            // Check if the product status is 0 (Pending) before allowing deletion
-            if (product.Status != 0)
-            {
-                return BadRequest("Cannot delete a product with status other than 0 (Pending).");
             }
 
             product.DeletedAt = DateTime.UtcNow;
@@ -354,11 +471,18 @@ namespace Backend_API.Controllers
             }
 
             //Check if the products with the given id exists in the database
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+                .Include(p => p.ProductImages)
+                .Include(p => p.Categories)
+                .Include(p => p.Tags)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (product == null)
             {
                 return NotFound();
             }
+
+            //Map the properties from the DTO to the existing entity
+            _mapper.Map(productData, product);
 
             // Check for duplicate product name (ignore the current product)
             if (_context.Products.Any(p => p.Name == productData.Name && p.Id != id))
@@ -366,8 +490,76 @@ namespace Backend_API.Controllers
                 return BadRequest("A category with the same name already exists.");
             }
 
-            //Map the properties from the DTO to the existing entity
-            _mapper.Map(productData, product);
+            // Create new product images
+            foreach (var imageModel in productData.NewProductImages)
+            {
+                var newImage = _mapper.Map<ProductImage>(imageModel);
+                product.ProductImages.Add(newImage);
+            }
+
+            // Remove product images
+            foreach (var imageId in productData.RemoveProductImageIds)
+            {
+                var imageToRemove = _context.ProductImages.FirstOrDefault(img => img.Id == imageId);
+                if (imageToRemove != null)
+                {
+                    _context.ProductImages.Remove(imageToRemove);
+                    // You might also want to delete the image from storage here.
+                }
+            }
+
+            // Handle categories
+            foreach (var categoryId in productData.CategoryIds)
+            {
+                // Check if the product is already associated with the category
+                var isAssociated = product.Categories.Any(c => c.Id == categoryId);
+
+                if (!isAssociated)
+                {
+                    // The product is not associated with this category, add it
+                    var category = await _context.Categories.FindAsync(categoryId);
+                    if (category != null)
+                    {
+                        product.Categories.Add(category);
+                    }
+                }
+            }
+
+
+            // Remove the product from categories that are no longer associated
+            foreach (var category in product.Categories.ToList())
+            {
+                if (!productData.CategoryIds.Contains(category.Id))
+                {
+                    product.Categories.Remove(category);
+                }
+            }
+
+            // Handle tags
+            foreach (var tagId in productData.TagIds)
+            {
+                // Check if the product is already associated with the tag
+                var isAssociated = product.Tags.Any(t => t.Id == tagId);
+
+                if (!isAssociated)
+                {
+                    // The product is not associated with this tag, add it
+                    var tag = await _context.Tags.FindAsync(tagId);
+                    if (tag != null)
+                    {
+                        product.Tags.Add(tag);
+                    }
+                }
+            }
+
+            // Remove the product from tags that are no longer associated
+            foreach (var tag in product.Tags.ToList())
+            {
+                if (!productData.TagIds.Contains(tag.Id))
+                {
+                    product.Tags.Remove(tag);
+                }
+            }
 
             // Set the "updatedAt" property to the current datetime
             product.UpdatedAt = DateTime.UtcNow;
@@ -389,6 +581,94 @@ namespace Backend_API.Controllers
             }
 
             return NoContent();
+        }
+
+        [HttpGet("related_products/{productId}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<List<ProductDTO>>> GetRelatedProducts(int productId, int limit)
+        {
+            var currentProduct = await _context.Products
+                .Include(p => p.Author)
+                .Include(p => p.Publisher)
+                .Include(p => p.Categories)
+                .Include(p => p.Tags)
+                .FirstOrDefaultAsync(p => p.Id == productId);
+            
+            if (currentProduct == null)
+            {
+                return NotFound();
+            }
+
+            var relatedProducts = new List<ProductDTO>();
+           
+
+            // Step 2: Find products with similar categories
+            relatedProducts.AddRange(await FindProductsByCategories(currentProduct.Categories));
+
+            // Step 3: Find products with similar tags
+            relatedProducts.AddRange(await FindProductsByTags(currentProduct.Tags));
+
+            // Step 4: Rank related products based on relevance (you need to implement the ranking logic)
+
+            // Step 5: Return the top related products
+            var topRelatedProducts = relatedProducts
+                .Where(p => p.Id != productId) // Exclude the original product
+                .Take(limit)
+                .ToList();
+
+            return topRelatedProducts;
+        }
+
+        private async Task<List<ProductDTO>> FindProductsByAuthor(int authorId)
+        {
+            return await _context.Products
+                .Include(p => p.Author)
+                .Include(p => p.Publisher)
+                .Include(p => p.Categories)
+                .Include(p => p.Tags)
+                .Where(p => p.AuthorId == authorId)
+                .Select(p => _mapper.Map<ProductDTO>(p))
+                .ToListAsync();
+        }
+
+        private async Task<List<ProductDTO>> FindProductsByCategories(ICollection<Category> categories)
+        {
+            // Get the list of category IDs
+            var categoryIds = categories.Select(c => c.Id).ToList();
+
+            // Fetch the products in-memory and then filter in-memory
+            var products = await _context.Products
+                .Include(p => p.Author)
+                .Include(p => p.Publisher)
+                .Include(p => p.Categories)
+                .Include(p => p.Tags)
+                .Where(p => p.Categories.Any(c => categoryIds.Contains(c.Id)))
+                .ToListAsync();
+
+            // Now that we have the products in-memory, we can select and map them
+            var productDTOs = products.Select(p => _mapper.Map<ProductDTO>(p)).ToList();
+
+            return productDTOs;
+        }
+
+        private async Task<List<ProductDTO>> FindProductsByTags(ICollection<Tag> tags)
+        {
+            // Get the list of tag IDs
+            var tagIds = tags.Select(t => t.Id).ToList();
+
+            // Fetch the products in-memory and then filter in-memory
+            var products = await _context.Products
+                .Include(p => p.Author)
+                .Include(p => p.Publisher)
+                .Include(p => p.Categories)
+                .Include(p => p.Tags)
+                .Where(p => p.Tags.Any(t => tagIds.Contains(t.Id)))
+                .ToListAsync();
+
+            // Now that we have the products in-memory, we can select and map them
+            var productDTOs = products.Select(p => _mapper.Map<ProductDTO>(p)).ToList();
+
+            return productDTOs;
         }
 
         private bool ProductExists(int id)
@@ -423,5 +703,6 @@ namespace Backend_API.Controllers
             return totalRating / reviews.Count;
         }
     }
+
 }
 

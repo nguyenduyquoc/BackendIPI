@@ -215,7 +215,7 @@ namespace Backend_API.Entities
             return uniqueString;
         }
 
-        private static void SeedOrderProducts(BookstoreContext context)
+        /*private static void SeedOrderProducts(BookstoreContext context)
         {
             var random = new Random();
             for (int i = 1; i <= 350; i++)
@@ -261,7 +261,7 @@ namespace Backend_API.Entities
                 }
             }
             context.SaveChanges();
-        }
+        }*/
 
         private static string HashPassword(string password)
         {

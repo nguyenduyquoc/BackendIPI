@@ -16,6 +16,8 @@ namespace Backend_API.ViewModels
 
         public decimal Price { get; set; }
 
+        public decimal VatRate { get; set; }
+
         public decimal? DiscountAmount { get; set; }
 
         public int Quantity { get; set; }
@@ -25,6 +27,12 @@ namespace Backend_API.ViewModels
         public int PublisherId { get; set; }
 
         public int PublishYear { get; set; }
+
+        public virtual ICollection<ProductImageCreateModel> ProductImages { get; set; } = new List<ProductImageCreateModel>();
+
+        public virtual ICollection<int> CategoryIds { get; set; } = new List<int>();
+
+        public virtual ICollection<int> TagIds { get; set; } = new List<int>();
 
     }
 }

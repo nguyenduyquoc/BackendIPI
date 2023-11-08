@@ -20,18 +20,15 @@ namespace Backend_API.DTOs
 
         public decimal Price { get; set; }
 
+        public decimal VatRate { get; set; }
+
         public decimal? DiscountAmount { get; set; }
 
         public int Quantity { get; set; }
 
-        public int AuthorId { get; set; }
+        public virtual AuthorDTO? Author { get; set; } = null!;
 
-        public string? AuthorName { get; set; }
-        public string? AuthorAvatar { get; set; }
-
-        public int PublisherId { get; set; }
-
-        public string? PublisherName { get; set; }
+        public virtual PublisherDTO? Publisher { get; set; } = null!;
 
         public int PublishYear { get; set; }
 

@@ -1,5 +1,7 @@
 using Backend_API;
 using Backend_API.Entities;
+using Backend_API.Services;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -29,8 +31,6 @@ builder.Services.AddControllers()
     = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 // Add AutoMapper configuration
 builder.Services.AddAutoMapper(typeof(MappingProfile));
@@ -67,6 +67,28 @@ builder.Services.AddAuthorization(options =>
 
     
 });
+
+// Add Cloudinary config
+IConfigurationSection cloudinaryConfig = builder.Configuration.GetSection("CloudinarySettings");
+Account cloudinaryAccount = new Account(
+    cloudinaryConfig["CloudName"],
+    cloudinaryConfig["ApiKey"],
+    cloudinaryConfig["ApiSecret"]
+);
+var cloudinary = new Cloudinary(cloudinaryAccount);
+builder.Services.AddSingleton(cloudinary);
+
+// Add Email Config
+var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+
+builder.Services.AddSingleton(emailConfig);
+// Add Email service
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+// Add Email Template Service
+builder.Services.AddSingleton<EmailTemplateService>();
+// Add Email content generate service
+builder.Services.AddSingleton<EmailContentService>();
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

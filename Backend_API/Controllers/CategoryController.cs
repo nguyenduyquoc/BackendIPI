@@ -128,7 +128,28 @@ namespace Backend_API.Controllers
 
             return Ok(categoryDTO);
         }
+        [HttpGet("{slug}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<CategoryDTO>> GetCategory(string slug)
+        {
+            if (_context.Categories == null)
+            {
+                return NotFound();
+            }
+            var category = await _context.Categories
+                .Include(c => c.InverseParent)
+                .FirstOrDefaultAsync(c => c.Slug == slug);
 
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            //Map Category to CategoryDTO
+            var categoryDTO = _mapper.Map<CategoryDTO>(category);
+
+            return categoryDTO;
+        }
 
 
         // CREAT NEW A CATEGORY

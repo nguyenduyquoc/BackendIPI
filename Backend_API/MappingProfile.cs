@@ -43,32 +43,40 @@ namespace Backend_API
 
             // District
             CreateMap<District, DistrictDTO>()
-                .ForMember(dest => dest.UserAddresses, opt => opt.MapFrom(src => src.UserAddresses != null ? src.UserAddresses : null))
-                .ForMember(dest => dest.ProvinceName, opt => opt.MapFrom(src => src.Province != null ? src.Province.Name : null));
+                .ForMember(dest => dest.ProvinceName, opt => opt.MapFrom(src => src.Province != null ? src.Province.Name : null))
+                .ForMember(dest => dest.DeliveryServices, opt => opt.MapFrom(src => src.DeliveryServices != null ? src.DeliveryServices : null));
             CreateMap<DistrictDTO, District>();
 
             // Order
-            CreateMap<Order, OrderDTO>().ReverseMap();
+            CreateMap<Order, OrderDTO>()
+                .ForMember(dest => dest.ReturnRequestId, opt => opt.MapFrom(src => src.ReturnRequest.Id))
+                .ForMember(dest => dest.ReturnRequestStatus, opt => opt.MapFrom(src => src.ReturnRequest.Status));
+            CreateMap<OrderDTO, Order>();
             CreateMap<OrderCreateModel, Order>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.Now));
 
             //OrderProduct
-            CreateMap<OrderProduct, OrderProductDTO>().ReverseMap();
+            CreateMap<OrderProduct, OrderProductDTO>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
+                .ForMember(dest => dest.ProductSlug, opt => opt.MapFrom(src => src.Product.Slug))
+                .ForMember(dest => dest.ProductThumbnail, opt => opt.MapFrom(src => src.Product.Thumbnail));
+
+            CreateMap<OrderProductDTO, OrderProduct>();
             CreateMap<OrderProductCreateModel, OrderProduct>();
 
             // Product
             CreateMap<Product, ProductDTO>()
-                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.Author != null ? src.Author.Name : null))
-                .ForMember(dest => dest.AuthorAvatar, opt => opt.MapFrom(src => src.Author != null ? src.Author.Avatar : null))
-                .ForMember(dest => dest.PublisherName, opt => opt.MapFrom(src => src.Publisher != null ? src.Publisher.Name : null))
+                .ForMember(dest => dest.Reviews, opt => opt.MapFrom(src =>
+                    src.OrderProducts.Where(op => op.Review != null).Select(op => op.Review).ToList()))
                 .ForMember(dest => dest.Rating, opt =>
                 {
-                    opt.MapFrom(src => CalculateAverageRating(src.Reviews.ToList()));
+                    opt.MapFrom(src => CalculateAverageRating(
+                        src.OrderProducts.Where(op => op.Review != null).Select(op => op.Review).ToList()));
                 })
                 .ForMember(dest => dest.SoldQuantity, opt =>
                 {
                     opt.MapFrom(src => src.OrderProducts
-                        .Where(op => op.Order != null && op.Order.Status == 4)
+                        .Where(op => op.Order != null && op.Order.Status == 5)
                         .Sum(op => op.Quantity));
                 });
             CreateMap<ProductDTO, Product>();
@@ -97,15 +105,22 @@ namespace Backend_API
                  .ForMember(dest => dest.Slug, opt => opt.MapFrom(src => Slugify(src.Name)));
 
             // ReturnRequest
-            CreateMap<ReturnRequest, ReturnRequestDTO>().ReverseMap();
+            CreateMap<ReturnRequest, ReturnRequestDTO>()
+                .ForMember(dest => dest.ReturnProducts, opt => opt.MapFrom(src => src.Order.OrderProducts.Where(op => op.ReturnQuantity > 0)));
+            CreateMap<ReturnRequestDTO, ReturnRequest>();
 
             // Return Request Image
             CreateMap<ReturnRequestImage, ReturnRequestImageDTO>();
 
             // Review
-            CreateMap<Review, ReviewDTO>().ReverseMap();
+            CreateMap<Review, ReviewDTO>()
+                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.OrderProduct.Order.Id))
+                .ForMember(dest => dest.Fname, opt => opt.MapFrom(src => src.OrderProduct.Order.User.Fname))
+                .ForMember(dest => dest.Lname, opt => opt.MapFrom(src => src.OrderProduct.Order.User.Lname))
+                .ForMember(dest => dest.Avatar, opt => opt.MapFrom(src => src.OrderProduct.Order.User.Avatar))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.OrderProduct.Order.User.Email));
+            CreateMap<ReviewDTO, Review>();
             CreateMap<ReviewCreateModel, Review>();
-            CreateMap<ReviewEditModel, Review>();
 
             // Admin
             CreateMap<Admin, AdminDTO>()
@@ -134,6 +149,8 @@ namespace Backend_API
             CreateMap<UserAddressDTO, UserAddress>();
             CreateMap<UserAddressCreateModel, UserAddress>();
             CreateMap<UserAddressEditModel, UserAddress>();
+
+            CreateMap<DeliveryService, DeliveryServiceDTO>().ReverseMap();
 
             // Admin
             /*CreateMap<Admin, AdminDTO>()
